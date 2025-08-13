@@ -457,7 +457,7 @@ body.chat-active #messages-list {
     
     body.chat-active {
         padding-top: var(--header-height);
-        overflow-y: auto;
+        /* Elimina overflow-y: auto; aquí para evitar scroll en el body */
     }
 
     /* Oculta el botón de ofertas en móviles */
@@ -489,17 +489,31 @@ body.chat-active #messages-list {
     #main-content {
         max-width: 100%;
         padding: 0 1rem;
-        height: 100vh;
+        /* Elimina la altura fija: height: 100vh; */
         justify-content: center;
+        /* Usa flexbox para distribuir el espacio */
+        height: auto;
+        min-height: 100vh;
     }
 
-    #chat-container {
-        max-width: 100%;
-        max-height: 100%;
+    /* Esta es la clave: el chat-container debe ser el contenedor flex */
+    body.chat-active #main-content {
+        justify-content: flex-start;
     }
     
+    #chat-container {
+        max-width: 100%;
+        height: 100%; /* Ajusta la altura al 100% de su padre flex */
+        display: flex;
+        flex-direction: column;
+    }
+    
+    /* La lista de mensajes debe crecer para ocupar el espacio disponible */
     #messages-list {
         padding: 1rem;
+        flex-grow: 1; /* Esto es crucial */
+        overflow-y: auto; /* Permite scroll solo en la lista de mensajes */
+        height: auto;
     }
     
     .quick-actions {
@@ -518,26 +532,13 @@ body.chat-active #messages-list {
         font-size: 0.9rem;
     }
 
-    #bottom-fixed-area {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: #11131C;
-        padding: 1rem;
-        box-sizing: border-box;
-        z-index: 998;
-    }
-
-    .quick-actions {
-        margin-bottom: 0.5rem;
-    }
-
     #message-form {
         margin-top: 0;
         padding: 1rem;
+        position: sticky; /* O position: fixed; */
+        bottom: 0;
     }
-
+    
     .cookie-notice {
         margin-top: 0.5rem;
         padding-top: 0;
