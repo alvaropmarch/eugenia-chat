@@ -77,7 +77,7 @@ $(function () {
 
   // Función genérica para llamar a nuestro proxy
   async function callProxy(targetUrl, body = null) {
-    // La URL correcta a nuestro proxy es /api/proxy
+    // CORRECCIÓN: La URL correcta a nuestro proxy es /api/proxy
     const response = await fetch('/api/proxy', {
       method: "POST",
       headers: { "Content-Type": "application/json" },
