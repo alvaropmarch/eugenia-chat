@@ -11,6 +11,8 @@
     --bubble-outgoing: var(--primary);
     --bubble-incoming: #21262D;
     --header-height: 80px; /* Altura del nuevo header */
+    --bottom-area-height: 120px; /* Altura aproximada del área inferior */
+    --vh: 1vh; /* Variable para altura de la ventana en móviles */
 }
 
 body {
@@ -23,7 +25,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100); /* Usa la variable --vh */
     box-sizing: border-box;
     transition: all 0.5s ease;
     overflow: hidden; /* Deshabilita el scroll en la pantalla de inicio */
@@ -406,7 +408,7 @@ body.chat-active #messages-list {
     gap: 1rem;
     margin-bottom: 1rem;
     padding: 0;
-    overflow-x: auto;
+    flex-wrap: wrap;
 }
 
 .quick-action-button {
@@ -470,6 +472,8 @@ body.chat-active #messages-list {
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
+        display: flex;
+        opacity: 1;
     }
 
     .header-actions {
@@ -495,6 +499,7 @@ body.chat-active #messages-list {
     
     .fade-overlay {
         height: 40px; /* Tamaño reducido para móviles */
+        display: none;
     }
 
     #messages-list {
@@ -511,7 +516,10 @@ body.chat-active #messages-list {
     flex-wrap: wrap; /* Añade esta propiedad para que los elementos se envuelvan */
 }
 
-
+    .quick-action-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
     
 
     .quick-action-button:nth-child(1) {

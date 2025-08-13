@@ -244,6 +244,15 @@ function activateChatLayout() {
 
 // --- INICIO DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Código para gestionar la altura del viewport en iOS
+    function setVh() {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    setVh();
+    window.addEventListener('resize', setVh);
+
     const defaultMessage = "Hola! Quiero ahorrar en mi factura de la luz";
     messageInput.value = defaultMessage;
     
