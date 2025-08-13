@@ -8,6 +8,8 @@
     --primary: #2F81F7;   /* Azul brillante para acentos */
     --text-primary: #E6EDF3; /* Texto principal blanco/gris claro */
     --text-secondary: #7D8590; /* Texto secundario gris */
+    --bubble-outgoing: var(--primary);
+    --bubble-incoming: #21262D;
     --header-height: 80px; /* Altura del nuevo header */
     --bottom-area-height: 120px; /* Altura aproximada del área inferior */
     --vh: 1vh; /* Variable para altura de la ventana en móviles */
@@ -47,7 +49,7 @@ body {
 body.chat-active {
     justify-content: flex-start;
     padding-top: var(--header-height);
-    overflow-y: auto; /* Habilita el scroll una vez que el chat se activa */
+    overflow: auto; /* Habilita el scroll una vez que el chat se activa */
 }
 
 body.chat-active .initial-header {
@@ -459,30 +461,60 @@ body.chat-active #messages-list {
     
     body.chat-active {
         padding-top: var(--header-height);
-        overflow-y: auto;
+        overflow: hidden; /* Evita que todo el body se desborde */
     }
-    
+
+    .initial-header {
+        text-align: left;
+    }
+
+    /* El header fijo se mantiene visible en móviles */
     .fixed-header {
+        height: 60px;
+        padding: 0 1rem;
+        display: flex;
+        opacity: 1;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .cta-button.primary {
         display: none;
     }
-    
-    .fade-overlay {
-        display: none;
+
+    .cta-button.secondary {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
     }
-    
+
     #main-content {
         max-width: 100%;
-        padding: 0 1rem;
+        padding: 0; /* Ajuste para el padding, se hace en los hijos */
         height: 100vh;
         justify-content: center;
     }
 
     #chat-container {
         max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        display: flex;
+        flex-direction: column;
     }
     
+    .fade-overlay {
+        height: 40px;
+        display: flex;
+    }
+
     #messages-list {
         padding: 1rem;
+        flex-grow: 1;
+        height: auto;
+        overflow-y: auto; /* Solo la lista de mensajes hace scroll */
+        padding-bottom: 200px; /* Espacio para el área de input fijo */
     }
     
     .quick-actions {
@@ -490,22 +522,17 @@ body.chat-active #messages-list {
         justify-content: flex-start;
         gap: 0.5rem;
     }
-
+    
     .quick-action-button {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
     
-    .quick-actions .quick-action-button:nth-child(1) {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-
     .message {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
-
+    
     #bottom-fixed-area {
         position: fixed;
         bottom: 0;
@@ -527,12 +554,7 @@ body.chat-active #messages-list {
     }
 
     .cookie-notice {
-        margin-top: 0.5rem;
+        margin-top: 0;
         padding-top: 0;
-        opacity: 0;
-    }
-
-    body.chat-active .cookie-notice {
-        opacity: 1;
     }
 }
