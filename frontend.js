@@ -81,12 +81,19 @@ $(function () {
       body: JSON.stringify({ url: targetUrl, body: body }),
     });
 
+    const contentType = response.headers.get("content-type");
+    let data;
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      data = await response.text();
+    }
+
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("El proxy devolvió un error:", errorData);
+      console.error("El proxy devolvió un error:", data);
       throw new Error(`El proxy devolvió un error: ${response.status}`);
     }
-    return response.json();
+    return data;
   }
 
   async function setUpContact() {
