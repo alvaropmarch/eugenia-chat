@@ -1,3 +1,5 @@
+// frontend.js (CORREGIDO)
+
 $(function () {
   "use strict";
 
@@ -28,7 +30,7 @@ $(function () {
       status.text('Conectado. Envía un mensaje:');
     } catch (error) {
       console.error("La configuración inicial falló:", error);
-      status.text('Error de configuración.');
+      status.text('Error de configuración. Revisa la consola.');
     }
   };
 
@@ -81,19 +83,13 @@ $(function () {
       body: JSON.stringify({ url: targetUrl, body: body }),
     });
 
-    const contentType = response.headers.get("content-type");
-    let data;
-    if (contentType && contentType.includes("application/json")) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
+    const responseData = await response.json();
 
     if (!response.ok) {
-      console.error("El proxy devolvió un error:", data);
+      console.error("El proxy devolvió un error:", responseData);
       throw new Error(`El proxy devolvió un error: ${response.status}`);
     }
-    return data;
+    return responseData;
   }
 
   async function setUpContact() {
