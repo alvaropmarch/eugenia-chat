@@ -3,14 +3,14 @@ $(function () {
 
   window.chatwoot = {
     inboxIdentifier: "7ACPGX9a461tb9fuKWWh5ij2",
-    chatwootAPIHost: "[https://app.chatwoot.com/api/v1](https://app.chatwoot.com/api/v1)",
+    chatwootAPIHost: "https://app.chatwoot.com/api/v1",
   };
 
   var content = $('#content');
   var input = $('#input');
   var status = $('#status');
 
-  var connection = new WebSocket('wss://[app.chatwoot.com/cable](https://app.chatwoot.com/cable)');
+  var connection = new WebSocket('wss://app.chatwoot.com/cable');
 
   connection.onopen = async function () {
     try {
@@ -82,6 +82,8 @@ $(function () {
     });
 
     if (!response.ok) {
+      const errorData = await response.json();
+      console.error("El proxy devolvió un error:", errorData);
       throw new Error(`El proxy devolvió un error: ${response.status}`);
     }
     return response.json();

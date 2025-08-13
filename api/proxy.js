@@ -22,10 +22,13 @@ export default async function handler(req, res) {
 
     const responseText = await chatwootResponse.text();
     
+    // Devolvemos la respuesta exacta que nos dio Chatwoot.
+    // Es importante establecer la cabecera Content-Type correcta.
     res.setHeader('Content-Type', 'application/json');
     res.status(chatwootResponse.status).send(responseText);
 
   } catch (error) {
+    console.error('[PROXY] Ocurrió un error inesperado:', error);
     res.status(500).json({ error: 'La petición del proxy ha fallado.', details: error.message });
   }
 }
