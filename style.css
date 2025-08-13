@@ -49,7 +49,7 @@ body {
 body.chat-active {
     justify-content: flex-start;
     padding-top: var(--header-height);
-    overflow: auto; /* Habilita el scroll una vez que el chat se activa */
+    overflow-y: auto; /* Habilita el scroll una vez que el chat se activa */
 }
 
 body.chat-active .initial-header {
@@ -454,21 +454,16 @@ body.chat-active #messages-list {
 /* ========================================= */
 /* --- ESTILOS RESPONSIVOS PARA MÓVIL --- */
 /* ========================================= */
-
-
 @media (max-width: 768px) {
-
-
     body {
         padding: 0;
     }
-
-    /* Oculta el botón de ofertas en móviles */
-    .cta-button.primary {
-        display: none;
+    
+    body.chat-active {
+        overflow-y: auto;
     }
 
-    /* Ajuste para el header fijo en móviles */
+    /* El header fijo se mantiene visible en móviles */
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
@@ -478,6 +473,10 @@ body.chat-active #messages-list {
 
     .header-actions {
         gap: 0.5rem;
+    }
+
+    .cta-button.primary {
+        display: none;
     }
 
     .cta-button.secondary {
@@ -498,42 +497,37 @@ body.chat-active #messages-list {
     }
     
     .fade-overlay {
-        height: 40px; /* Tamaño reducido para móviles */
-        display: none;
+        height: 40px;
+        display: flex; /* Ahora se mantiene visible y se ajusta */
     }
 
     #messages-list {
         padding: 1rem;
     }
-
     
-.quick-actions {
-    display: flex;
-    justify-content: start;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    padding: 0;
-    flex-wrap: wrap; /* Añade esta propiedad para que los elementos se envuelvan */
-}
+    .quick-actions {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .quick-action-button:nth-child(1) {
+        order: 1;
+    }
+    
+    .quick-action-button:nth-child(2) {
+        order: 2;
+    }
+    
+    .quick-action-button:nth-child(3) {
+        order: 3;
+    }
 
     .quick-action-button {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
     
-
-    .quick-action-button:nth-child(1) {
-    order: 1;
-   }
-
-.quick-action-button:nth-child(2) {
-    order: 2;
-}
-
-.quick-action-button:nth-child(3) {
-    order: 3;
-}
-
     .message {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
@@ -550,6 +544,9 @@ body.chat-active #messages-list {
         z-index: 998;
     }
 
+    .quick-actions {
+        margin-bottom: 0.5rem;
+    }
 
     #message-form {
         margin-top: 0;
