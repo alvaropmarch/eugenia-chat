@@ -492,7 +492,7 @@ body.chat-active #messages-list {
     /* Los botones de acción rápida ahora se ajustan en varias líneas */
     .quick-actions {
         flex-wrap: wrap;
-        justify-content: center;
+        justify-content: flex-start; /* Centra a la izquierda en móviles */
         gap: 0.5rem;
     }
 
