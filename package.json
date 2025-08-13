@@ -1,0 +1,8 @@
+{
+  "name": "chat-con-backend",
+  "version": "1.0.0",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "formidable": "^3.5.1"
+  }
+}

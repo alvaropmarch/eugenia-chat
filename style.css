@@ -1,3 +1,6 @@
+/* Importar DM Sans de Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+
 /* --- Reseteo y Configuración General --- */
 :root {
     --background: #0D1117; /* Azul muy oscuro, casi negro */
@@ -10,8 +13,8 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--background);
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #11131C;
     color: var(--text-primary);
     margin: 0;
     display: flex;
@@ -63,90 +66,6 @@ header h1 {
 }
 
 /* --- Burbujas de Mensajes --- */
-.message {
-    padding: 0.75rem 1.25rem;
-    border-radius: 1.25rem;
-    max-width: 75%;
-    word-wrap: break-word;
-    line-height: 1.5;
-    font-size: 1rem;
-}
-
-.incoming {
-    background-color: var(--bubble-incoming);
-    color: var(--text-primary);
-    align-self: flex-start;
-    border-bottom-left-radius: 0.5rem;
-}
-
-.outgoing {
-    background-color: var(--bubble-outgoing);
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 0.5rem;
-}
-
-
-/* --- Formulario de Envío (La parte más importante del cambio) --- */
-#message-form {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    margin-top: 1rem;
-    background-color: var(--surface);
-    border-radius: 1rem;
-    border: 1px solid #30363D;
-}
-
-#message-input {
-    flex-grow: 1;
-    border: none;
-    background-color: transparent;
-    color: var(--text-primary);
-    padding: 0.75rem;
-    font-size: 1rem;
-    font-family: 'Inter', sans-serif;
-}
-
-#message-input:focus {
-    outline: none;
-}
-
-#message-input::placeholder {
-    color: var(--text-secondary);
-}
-
-#message-form button {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.6rem 1rem;
-    background-color: var(--text-primary);
-    color: var(--background);
-    border: none;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background-color 0.2s ease;
-}
-
-#message-form button:hover {
-    background-color: #cdd2d9;
-}
-
-#message-form button span {
-    line-height: 1;
-}
-
-/* Ocultar el scrollbar pero permitir scroll */
-#messages-list::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-}
-/* --- Añadir al final de style.css --- */
-
 @keyframes slide-in-fade-in {
     from {
         opacity: 0;
@@ -159,6 +78,161 @@ header h1 {
 }
 
 .message {
-    /* ... tus estilos existentes ... */
+    padding: 0.75rem 1.25rem;
+    border-radius: 1.25rem;
+    max-width: 75%;
+    word-wrap: break-word;
+    line-height: 1.5;
+    font-size: 1rem;
     animation: slide-in-fade-in 0.4s ease-out;
+}
+
+.incoming {
+    background: transparent !important;
+    color: #fff !important;
+    align-self: flex-start;
+    border-bottom-left-radius: 0.5rem;
+}
+
+.outgoing {
+    background-color: #1D1F28 !important;
+    color: #fff !important;
+    align-self: flex-end;
+    border-bottom-right-radius: 0.5rem;
+}
+
+
+/* --- Formulario de Envío (La parte más importante del cambio) --- */
+#message-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1.2rem 1.5rem;
+    margin-top: 1rem;
+    background-color: #1D1F28;
+    border-radius: 1.5rem;
+    border: 2px solid #282A33;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Input ocupa todo el espacio entre los botones */
+#message-input {
+    width: 100%;
+    background: transparent !important;
+    color: #fff !important;
+    border: none !important;
+    outline: none !important;
+    font-size: 1rem !important;
+    font-family: 'DM Sans', sans-serif;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+/* Placeholder del input */
+#message-input::placeholder {
+    color: #8C90A1 !important;
+    opacity: 1;
+    font-size: 1rem !important;
+    font-family: 'DM Sans', sans-serif;
+}
+
+/* Acciones abajo, botones a los extremos */
+.message-form-actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: end;
+    width: 100%;
+}
+
+/* Botón de adjuntar a la izquierda */
+#attach-file-button {
+    background: transparent !important;
+    color: #E6EDF3 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0.5rem;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+}
+
+/* Botón de enviar a la derecha */
+#message-form button[type="submit"] {
+    background-color: #E6EDF3 !important;
+    color: #282A33 !important;
+    border: none;
+    border-radius: 1.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: none;
+    transition: background 0.2s;
+}
+
+#attach-file-button svg {
+    width: 1em;
+    height: 1.2em;
+    stroke: #E6EDF3;
+    fill: none;
+}
+
+#attach-file-button:hover {
+    background: #232532;
+}
+
+#message-form button[type="submit"]:hover {
+    background-color: #dbe3ea;
+}
+
+/* Ocultar el scrollbar pero permitir scroll */
+#messages-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* Estilos para el contenedor del indicador */
+#typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.9rem 1.25rem; /* Ajuste para que se vea bien */
+}
+
+/* Estilos para cada punto */
+.typing-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--text-secondary);
+    border-radius: 50%;
+    animation: pulse 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+/* Animación de pulso */
+@keyframes pulse {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1.0);
+    }
 }
