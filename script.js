@@ -11,6 +11,8 @@ const loadingIndicator = document.getElementById('loading-indicator');
 const typingIndicator = document.getElementById('typing-indicator');
 const attachFileButton = document.getElementById('attach-file-button');
 const fileInput = document.getElementById('file-input');
+const quickActionButtons = document.querySelectorAll('.quick-action-button');
+const quickActionsContainer = document.querySelector('.quick-actions');
 
 // --- GESTIÓN DE ESTADO ---
 let messagesState = [];
@@ -19,7 +21,7 @@ let conversationId = null;
 let pollingTimer = null;
 let typingTimer = null;
 let lastMessageSentAt = 0;
-let isWaitingForResponse = false; // Nuevo estado para controlar si estamos esperando respuesta
+let isWaitingForResponse = false;
 
 // --- FUNCIONES ---
 
@@ -27,16 +29,11 @@ let isWaitingForResponse = false; // Nuevo estado para controlar si estamos espe
  * Renderiza de forma incremental solo los mensajes nuevos.
  */
 function renderAllMessages() {
-    // Ordena los mensajes por fecha antes de renderizar
     messagesState.sort((a, b) => (a.created_at || a.created_at_utc) - (b.created_at || b.created_at_utc));
-
-    // Obtén los IDs de los mensajes ya renderizados
     const renderedIds = new Set(Array.from(messagesList.querySelectorAll('.message')).map(div => div.dataset.id));
 
     messagesState.forEach(msg => {
         const msgId = msg.id;
-        
-        // Si el mensaje ya está renderizado, lo omitimos
         if (renderedIds.has(String(msgId))) return;
 
         const type = msg.sender && msg.sender.type === 'contact' ? 'outgoing' : 'incoming';
@@ -56,14 +53,12 @@ function renderAllMessages() {
         messagesList.appendChild(messageDiv);
     });
 
-    // Gestiona el indicador de typing, asegurando que esté al final
     if (typingIndicator.style.display !== 'none') {
         messagesList.appendChild(typingIndicator);
     }
     
     scrollToBottom();
 }
-
 
 function scrollToBottom() {
     if (messagesList) {
@@ -78,16 +73,13 @@ async function fetchAllMessages() {
         if (!response.ok) throw new Error('No se pudieron obtener los mensajes.');
         const data = await response.json();
 
-        // Actualizamos el estado de mensajes directamente con la respuesta del servidor
         messagesState = data;
         renderAllMessages();
 
-        // Oculta el indicador de typing si el último mensaje es del bot
         const lastMsg = messagesState[messagesState.length - 1];
         if (lastMsg && (!lastMsg.sender || lastMsg.sender.type !== 'contact')) {
             typingIndicator.style.display = 'none';
             if (typingTimer) clearTimeout(typingTimer);
-            // Si el último mensaje es del bot, re-habilita el formulario
             messageInput.disabled = false;
             messageForm.querySelector('button').disabled = false;
             isWaitingForResponse = false;
@@ -132,7 +124,10 @@ async function handleSendMessageForm(event) {
     const content = messageInput.value.trim();
     if (!content || !contactIdentifier || isWaitingForResponse) return;
 
-    // Deshabilita el formulario para evitar que el usuario escriba de nuevo
+    if (quickActionsContainer) {
+        quickActionsContainer.style.display = 'none';
+    }
+
     messageInput.disabled = true;
     messageForm.querySelector('button').disabled = true;
     isWaitingForResponse = true;
@@ -165,7 +160,6 @@ async function handleSendMessageForm(event) {
         await fetchAllMessages();
     } catch (error) {
         console.error("Error al enviar mensaje:", error);
-        // En caso de error, volvemos a habilitar el formulario
         messageInput.disabled = false;
         messageForm.querySelector('button').disabled = false;
         isWaitingForResponse = false;
@@ -177,7 +171,10 @@ async function handleFileSelect(event) {
     if (!file || isWaitingForResponse) return;
 
     try {
-        // Deshabilita el formulario
+        if (quickActionsContainer) {
+            quickActionsContainer.style.display = 'none';
+        }
+
         messageInput.disabled = true;
         messageForm.querySelector('button').disabled = true;
         isWaitingForResponse = true;
@@ -215,4 +212,16 @@ document.addEventListener('DOMContentLoaded', () => {
     messageForm.addEventListener('submit', handleSendMessageForm);
     attachFileButton.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
+
+    // Lógica para los botones de acción rápida
+    quickActionButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            // Elimina la clase 'is-active' de todos los botones
+            quickActionButtons.forEach(btn => btn.classList.remove('is-active'));
+            // Añade la clase 'is-active' al botón que ha sido clicado
+            button.classList.add('is-active');
+            
+            messageInput.value = button.dataset.message;
+        });
+    });
 });

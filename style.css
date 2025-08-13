@@ -236,3 +236,37 @@ header h1 {
         transform: scale(1.0);
     }
 }
+
+/* --- NUEVOS ESTILOS PARA LOS BOTONES DE ACCIÓN RÁPIDA --- */
+.quick-actions {
+    display: flex;
+    justify-content: start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0;
+    overflow-x: auto;
+}
+
+.quick-action-button {
+    background-color: #11131C;
+    color: #E1E2EE;
+    border: 1px solid #282A33;
+    border-radius: 2rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.quick-action-button:hover {
+    background-color: #383a45;
+    border-color: #383a45;
+}
+
+.quick-action-button.is-active {
+    background-color: #2F81F7;
+    border-color: #2F81F7;
+    color: #fff;
+}
