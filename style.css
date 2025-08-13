@@ -44,7 +44,6 @@ body {
     justify-content: center;
     transition: all 0.5s ease;
     /* Añade padding inferior para que el contenido no quede oculto por el formulario */
-    padding-bottom: 120px; /* Ajusta este valor si el formulario es más alto */
 }
 
 /* Estado activo del chat */
@@ -212,7 +211,7 @@ body.chat-active .fade-overlay {
     padding: 1rem;
     overflow-y: auto;
     display: none; /* Oculto por defecto */
-    flex-direction: column;
+    flex-direction: column-reverse; /* ¡El cambio clave! */
     gap: 0.75rem;
     padding-top: calc(var(--header-height) + 1rem);
 }
@@ -278,6 +277,11 @@ body.chat-active #messages-list {
     border: 2px solid #282A33;
     box-sizing: border-box;
     width: 100%;
+    /* Estilos para hacerlo fijo en la parte inferior */
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    z-index: 10; /* Asegura que esté por encima de otros elementos */
 }
 
 /* Input ocupa todo el espacio entre los botones */
@@ -440,7 +444,6 @@ body.chat-active #messages-list {
     font-size: 0.8rem;
     color: #929399;
     margin: 0.8rem;
-    opacity: 0;
     pointer-events: none;
     transition: opacity 0.5s ease-in-out;
 }
@@ -509,13 +512,7 @@ body.chat-active #messages-list {
         flex-direction: column;
     }
     
-    /* La lista de mensajes debe crecer para ocupar el espacio disponible */
-    #messages-list {
-        padding: 1rem;
-        flex-grow: 1; /* Esto es crucial */
-        overflow-y: auto; /* Permite scroll solo en la lista de mensajes */
-        height: auto;
-    }
+
     
     .quick-actions {
         flex-wrap: wrap;

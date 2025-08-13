@@ -56,18 +56,26 @@ function renderAllMessages() {
         } else {
             messageDiv.textContent = msg.content;
         }
-        messagesList.appendChild(messageDiv);
+        // Cambio para que los nuevos mensajes se añadan al principio de la lista.
+        // Esto, junto con el CSS flex-direction: column-reverse, hará que se muestren en la parte inferior.
+        messagesList.prepend(messageDiv);
     });
 
     if (typingIndicator.style.display !== 'none') {
-        messagesList.appendChild(typingIndicator);
+        // También usamos prepend para que el indicador de escritura aparezca en la parte inferior.
+        messagesList.prepend(typingIndicator);
     }
     
+    // Llamada a la función de scroll para que el foco esté en los mensajes nuevos.
     scrollToBottom();
 }
 
+/**
+ * Hace scroll hacia la parte inferior de la lista de mensajes.
+ */
 function scrollToBottom() {
     if (messagesList) {
+        // Usa `scrollHeight` para asegurar que el scroll vaya hasta el final.
         messagesList.scrollTo({ top: messagesList.scrollHeight, behavior: 'smooth' });
     }
 }
