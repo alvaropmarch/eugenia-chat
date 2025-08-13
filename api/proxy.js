@@ -21,10 +21,20 @@ export default async function handler(req, res) {
     });
 
     const responseText = await chatwootResponse.text();
-    
-    // Devolvemos la respuesta exacta que nos dio Chatwoot.
-    // Es importante establecer la cabecera Content-Type correcta.
-    res.setHeader('Content-Type', 'application/json');
+
+    let isJson = false;
+    try {
+      JSON.parse(responseText);
+      isJson = true;
+    } catch (e) {
+      isJson = false;
+    }
+
+    if (isJson) {
+      res.setHeader('Content-Type', 'application/json');
+    } else {
+      res.setHeader('Content-Type', 'text/plain');
+    }
     res.status(chatwootResponse.status).send(responseText);
 
   } catch (error) {
