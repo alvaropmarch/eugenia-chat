@@ -38,11 +38,13 @@ body {
     align-items: center;
     width: 100%;
     max-width: 720px;
-    height: 100%;
+    /* Ahora usará el espacio restante del body */
+    flex-grow: 1;
     box-sizing: border-box;
     justify-content: center;
     transition: all 0.5s ease;
-    flex-grow: 1;
+    /* Añade padding inferior para que el contenido no quede oculto por el formulario */
+    padding-bottom: 120px; /* Ajusta este valor si el formulario es más alto */
 }
 
 /* Estado activo del chat */
@@ -62,6 +64,7 @@ body.chat-active .initial-header {
 body.chat-active #main-content {
     justify-content: flex-start;
     flex-grow: 1;
+    padding-top: var(--header-height); /* Añade el padding aquí */
 }
 
 body.chat-active #chat-container {
@@ -493,7 +496,6 @@ body.chat-active #messages-list {
         justify-content: center;
         /* Usa flexbox para distribuir el espacio */
         height: auto;
-        min-height: 100vh;
     }
 
     /* Esta es la clave: el chat-container debe ser el contenedor flex */
@@ -503,7 +505,6 @@ body.chat-active #messages-list {
     
     #chat-container {
         max-width: 100%;
-        height: 100%; /* Ajusta la altura al 100% de su padre flex */
         display: flex;
         flex-direction: column;
     }
