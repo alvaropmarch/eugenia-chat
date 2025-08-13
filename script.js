@@ -7,12 +7,17 @@ const POLLING_INTERVAL = 3000;
 const messagesList = document.getElementById('messages-list');
 const messageForm = document.getElementById('message-form');
 const messageInput = document.getElementById('message-input');
-const loadingIndicator = document.getElementById('loading-indicator');
 const typingIndicator = document.getElementById('typing-indicator');
 const attachFileButton = document.getElementById('attach-file-button');
 const fileInput = document.getElementById('file-input');
 const quickActionButtons = document.querySelectorAll('.quick-action-button');
 const quickActionsContainer = document.querySelector('.quick-actions');
+const body = document.body;
+const mainContent = document.getElementById('main-content');
+const fixedHeader = document.querySelector('.fixed-header');
+const initialHeader = document.querySelector('.initial-header');
+const fadeOverlay = document.querySelector('.fade-overlay');
+const cookieNotice = document.querySelector('.cookie-notice');
 
 // --- GESTIÓN DE ESTADO ---
 let messagesState = [];
@@ -22,6 +27,7 @@ let pollingTimer = null;
 let typingTimer = null;
 let lastMessageSentAt = 0;
 let isWaitingForResponse = false;
+let isFirstMessageSent = false;
 
 // --- FUNCIONES ---
 
@@ -89,23 +95,6 @@ async function fetchAllMessages() {
     }
 }
 
-async function initializeChat() {
-    try {
-        const contactResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: `Visitante ${Math.floor(Math.random() * 1000)}` }),
-        });
-        if (!contactResponse.ok) throw new Error('Error al crear el contacto.');
-        const contact = await contactResponse.json();
-        contactIdentifier = contact.source_id;
-        if (loadingIndicator) loadingIndicator.style.display = 'none';
-    } catch (error) {
-        if (loadingIndicator) loadingIndicator.textContent = `Error al iniciar: ${error.message}`;
-        console.error(error);
-    }
-}
-
 async function ensureConversation() {
     if (!conversationId) {
         const convResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${contactIdentifier}/conversations`, {
@@ -122,7 +111,26 @@ async function ensureConversation() {
 async function handleSendMessageForm(event) {
     event.preventDefault();
     const content = messageInput.value.trim();
-    if (!content || !contactIdentifier || isWaitingForResponse) return;
+    if (!content || isWaitingForResponse) return;
+
+    if (!contactIdentifier) {
+        console.log("Iniciando conversación...");
+        try {
+            const contactResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: `Visitante ${Math.floor(Math.random() * 1000)}` }),
+            });
+            if (!contactResponse.ok) throw new Error('Error al crear el contacto.');
+            const contact = await contactResponse.json();
+            contactIdentifier = contact.source_id;
+        } catch (error) {
+            console.error(`Error al iniciar: ${error.message}`);
+            return;
+        }
+    }
+
+    activateChatLayout();
 
     if (quickActionsContainer) {
         quickActionsContainer.style.display = 'none';
@@ -170,7 +178,26 @@ async function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file || isWaitingForResponse) return;
 
+    if (!contactIdentifier) {
+        console.log("Iniciando conversación...");
+        try {
+            const contactResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: `Visitante ${Math.floor(Math.random() * 1000)}` }),
+            });
+            if (!contactResponse.ok) throw new Error('Error al crear el contacto.');
+            const contact = await contactResponse.json();
+            contactIdentifier = contact.source_id;
+        } catch (error) {
+            console.error(`Error al iniciar: ${error.message}`);
+            return;
+        }
+    }
+
     try {
+        activateChatLayout();
+
         if (quickActionsContainer) {
             quickActionsContainer.style.display = 'none';
         }
@@ -206,19 +233,33 @@ async function handleFileSelect(event) {
     }
 }
 
+// Función para activar el layout del chat después del primer mensaje
+function activateChatLayout() {
+    if (!isFirstMessageSent) {
+        body.classList.add('chat-active');
+        messagesList.style.display = 'flex'; // Muestra la lista de mensajes
+        isFirstMessageSent = true;
+    }
+}
+
 // --- INICIO DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-    initializeChat();
+    const defaultMessage = "Hola! Quiero ahorrar en mi factura de la luz";
+    messageInput.value = defaultMessage;
+    
+    // Asignar el botón activo por defecto al cargar la página
+    const defaultButton = document.querySelector('.quick-action-button');
+    if (defaultButton) {
+        defaultButton.classList.add('is-active');
+    }
+    
     messageForm.addEventListener('submit', handleSendMessageForm);
     attachFileButton.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
 
-    // Lógica para los botones de acción rápida
     quickActionButtons.forEach(button => {
         button.addEventListener('click', () => {
-            // Elimina la clase 'is-active' de todos los botones
             quickActionButtons.forEach(btn => btn.classList.remove('is-active'));
-            // Añade la clase 'is-active' al botón que ha sido clicado
             button.classList.add('is-active');
             
             messageInput.value = button.dataset.message;

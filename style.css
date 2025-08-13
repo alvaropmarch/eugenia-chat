@@ -10,6 +10,7 @@
     --text-secondary: #7D8590; /* Texto secundario gris */
     --bubble-outgoing: var(--primary);
     --bubble-incoming: #21262D;
+    --header-height: 80px; /* Altura del nuevo header */
 }
 
 body {
@@ -17,25 +18,179 @@ body {
     background-color: #11131C;
     color: var(--text-primary);
     margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     height: 100vh;
-    padding: 1rem;
     box-sizing: border-box;
+    transition: all 0.5s ease;
 }
 
-/* --- Encabezado --- */
-header {
+/* Contenedor principal para el centrado inicial */
+#main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     width: 100%;
-    text-align: center;
-    padding: 2rem 1rem;
+    max-width: 720px;
+    height: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    transition: all 0.5s ease;
+    flex-grow: 1;
 }
 
-header h1 {
-    font-size: 2.5rem;
+/* Estado activo del chat */
+body.chat-active {
+    justify-content: flex-start;
+    padding-top: var(--header-height);
+}
+
+body.chat-active .initial-header {
+    opacity: 0;
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+}
+
+body.chat-active .fixed-header {
+    opacity: 1;
+}
+
+body.chat-active #main-content {
+    justify-content: flex-start;
+    flex-grow: 1;
+}
+
+body.chat-active #chat-container {
+    height: 100%;
+    max-height: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+body.chat-active .cookie-notice {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* --- Encabezado Fijo (Nuevo) --- */
+.fixed-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--header-height);
+    background-color: #11131C;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    box-sizing: border-box;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* El elemento para el efecto de desvanecimiento */
+.fade-overlay {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to bottom, #11131C, rgba(17, 19, 28, 0));
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+body.chat-active .fade-overlay {
+    opacity: 1;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.5rem;
     font-weight: 700;
-    margin: 0;
+    color: #fff;
+}
+
+.header-logo img {
+    height: 32px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.cta-button {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.75rem 1.25rem;
+    border-radius: 2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.cta-button.primary {
+    background-color: transparent;
+    color: #E6EDF3;
+    border: 1px solid #282A33;
+}
+
+.cta-button.primary svg {
+    width: 18px;
+    height: 18px;
+}
+
+.cta-button.primary:hover {
+    background-color: #232532;
+    border-color: #232532;
+}
+
+.cta-button.secondary {
+    background-color: #E6EDF3;
+    color: #282A33;
+    border: 1px solid #E6EDF3;
+}
+
+.cta-button.secondary:hover {
+    background-color: #dbe3ea;
+}
+
+/* --- Encabezado Inicial (Antiguo) --- */
+.initial-header {
+    width: 100%;
+    text-align: left;
+    max-width: 720px;
+    padding: 0;
+}
+
+.subtitle {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #929399;
+    margin-bottom: 0.5rem;
+}
+
+.initial-header h1 {
+    font-size: 2.5rem;
+    font-weight: 400;
+    margin-bottom: 0.5rem;
+    margin-top: 0.20rem;
+
 }
 
 /* --- Contenedor Principal del Chat --- */
@@ -43,9 +198,10 @@ header h1 {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 720px; /* Un poco más ancho */
-    height: 100%;
+    max-width: 720px;
+    height: auto;
     max-height: 80vh;
+    transition: all 0.5s ease-in-out;
 }
 
 /* --- Lista de Mensajes --- */
@@ -53,9 +209,15 @@ header h1 {
     flex-grow: 1;
     padding: 1rem;
     overflow-y: auto;
-    display: flex;
+    display: none; /* Oculto por defecto */
     flex-direction: column;
     gap: 0.75rem;
+    padding-top: calc(var(--header-height) + 1rem);
+}
+
+/* Muestra el contenedor de mensajes cuando el chat está activo */
+body.chat-active #messages-list {
+    display: flex;
 }
 
 #loading-indicator {
@@ -102,7 +264,7 @@ header h1 {
 }
 
 
-/* --- Formulario de Envío (La parte más importante del cambio) --- */
+/* --- Formulario de Envío --- */
 #message-form {
     display: flex;
     flex-direction: column;
@@ -164,7 +326,17 @@ header h1 {
     transition: background 0.2s;
 }
 
-/* Botón de enviar a la derecha */
+#attach-file-button svg {
+    width: 1em;
+    height: 1.2em;
+    stroke: #E6EDF3;
+    fill: none;
+}
+
+#attach-file-button:hover {
+    background: #232532;
+}
+
 #message-form button[type="submit"] {
     background-color: #E6EDF3 !important;
     color: #282A33 !important;
@@ -179,17 +351,6 @@ header h1 {
     gap: 0.5rem;
     box-shadow: none;
     transition: background 0.2s;
-}
-
-#attach-file-button svg {
-    width: 1em;
-    height: 1.2em;
-    stroke: #E6EDF3;
-    fill: none;
-}
-
-#attach-file-button:hover {
-    background: #232532;
 }
 
 #message-form button[type="submit"]:hover {
@@ -207,7 +368,7 @@ header h1 {
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 0.9rem 1.25rem; /* Ajuste para que se vea bien */
+    padding: 0.9rem 1.25rem;
 }
 
 /* Estilos para cada punto */
@@ -237,7 +398,7 @@ header h1 {
     }
 }
 
-/* --- NUEVOS ESTILOS PARA LOS BOTONES DE ACCIÓN RÁPIDA --- */
+/* --- ESTILOS PARA LOS BOTONES DE ACCIÓN RÁPIDA --- */
 .quick-actions {
     display: flex;
     justify-content: start;
@@ -269,4 +430,91 @@ header h1 {
     background-color: #2F81F7;
     border-color: #2F81F7;
     color: #fff;
+}
+
+/* --- NUEVO ESTILO: Aviso de Cookies --- */
+.cookie-notice {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #929399;
+    margin: 0.8rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.cookie-notice a {
+    color: #2F81F7;
+    text-decoration: none;
+}
+
+/* ========================================= */
+/* --- ESTILOS RESPONSIVOS PARA MÓVIL --- */
+/* ========================================= */
+@media (max-width: 768px) {
+    body {
+        padding: 0;
+    }
+
+    /* Ajuste para el header fijo en móviles */
+    .fixed-header {
+        height: 60px;
+        padding: 0 1rem;
+    }
+
+    .header-logo span {
+        display: none;
+    }
+
+    .header-actions {
+        gap: 0.5rem;
+    }
+
+    .cta-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+    }
+    
+    .cta-button.primary span {
+        display: none;
+    }
+
+    .cta-button.primary {
+        padding: 0.5rem;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+    }
+
+    .cta-button.primary svg {
+        width: 1em;
+        height: 1em;
+        margin: auto;
+    }
+
+    /* Ajuste para el contenido principal */
+    #main-content {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+
+    /* Ajuste para el chat container */
+    #chat-container {
+        max-width: 100%;
+    }
+
+    /* Ajuste para los mensajes y el input */
+    #messages-list {
+        padding: 1rem;
+    }
+
+    #message-form {
+        padding: 1rem;
+    }
+
+    /* Reducir el padding de las burbujas de mensaje */
+    .message {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
 }
