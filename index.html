@@ -1,198 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Chatwoot Custom UI</title>
-    <meta charset="utf-8" />
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
-        #chat-container { width: 90%; max-width: 400px; height: 80vh; max-height: 600px; border: 1px solid #ddd; border-radius: 10px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        #content { flex: 1; overflow-y: auto; padding: 20px; border-bottom: 1px solid #eee; }
-        #content p { margin: 0 0 10px; line-height: 1.4; }
-        #content p span { font-weight: bold; color: #333; }
-        #input-area { padding: 15px; display: flex; flex-direction: column; }
-        #status { font-size: 0.8em; color: #888; margin-bottom: 5px; }
-        #input { border: 1px solid #ccc; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; font-size: 1em; }
-        #input:disabled { background: #f0f0f0; }
-    </style>
+    <title>Chat de Soporte</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="chat-container">
-        <div id="content"></div>
-        <div id="input-area">
-            <span id="status">Conectando...</span>
-            <input type="text" id="input" disabled="disabled" placeholder="Escribe tu mensaje y pulsa Enter..." />
+    <div class="chat-widget">
+        <div class="chat-header">
+            <h3>Contacta con Soporte</h3>
+        </div>
+        <div id="chat-messages" class="chat-messages">
+            </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Escribe tu mensaje...">
+            <button id="send-button">Enviar</button>
         </div>
     </div>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-      $(function () {
-        "use strict";
 
-        window.chatwoot = {
-          inboxIdentifier: "7ACPGX9a461tb9fuKWWh5ij2",
-          chatwootAPIHost: "https://app.chatwoot.com/api/v1",
-        };
-
-        var content = $('#content');
-        var input = $('#input');
-        var status = $('#status');
-
-        var connection = new WebSocket('wss://app.chatwoot.com/cable');
-
-        connection.onopen = async function () {
-          try {
-            await setUpContact();
-            await setUpConversation();
-            
-            connection.send(JSON.stringify({
-              command: "subscribe",
-              identifier: JSON.stringify({
-                channel: "RoomChannel",
-                pubsub_token: chatwoot.contactPubsubToken
-              })
-            }));
-            input.removeAttr('disabled');
-            status.text('Conectado. Envía un mensaje:');
-          } catch (error) {
-            console.error("La configuración inicial falló:", error);
-            status.text('Error de configuración. Revisa la consola.');
-          }
-        };
-
-        connection.onerror = function (error) {
-          console.error("Error de WebSocket:", error);
-          content.html($('<p>', { text: 'Lo sentimos, hay un problema con la conexión o el servidor está caído.' }));
-        };
-
-        connection.onmessage = function (message) {
-          try {
-            var json = JSON.parse(message.data);
-            if (json.type === 'welcome' || json.type === 'ping' || json.type === 'confirm_subscription') return;
-
-            if (json.message.event === 'message.created') {
-              if (json.message.data.message_type === 1) {
-                addMessage(json.message.data.sender.name, json.message.data.content);
-              }
-            }
-          } catch (e) {
-            console.log('JSON inválido recibido:', message.data);
-          }
-        };
-
-        input.keydown(function (e) {
-          if (e.keyCode === 13) {
-            var msg = $(this).val();
-            if (!msg) return;
-            sendMessage(msg);
-            addMessage("Tú", msg);
-            $(this).val('');
-          }
-        });
-
-        setInterval(function () {
-          if (connection.readyState !== 1) {
-            status.text('Error de conexión');
-            input.attr('disabled', 'disabled').val('No se puede comunicar con el servidor WebSocket.');
-          }
-        }, 3000);
-
-        function addMessage(author, message) {
-          content.append(`<p><span>${author}</span>: ${message}</p>`);
-          content.scrollTop(1000000);
-        }
-
-        async function callProxy(targetUrl, body = null) {
-          const response = await fetch('/api/proxy', {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: targetUrl, body: body }),
-          });
-
-          const responseData = await response.json();
-
-          if (!response.ok) {
-            console.error("El proxy devolvió un error:", responseData);
-            throw new Error(`El proxy devolvió un error: ${response.status}`);
-          }
-          return responseData;
-        }
-
-        async function setUpContact() {
-          let contactIdentifier = getCookie('contactIdentifier');
-          let contactPubsubToken = getCookie('contactPubsubToken');
-
-          if (contactIdentifier && contactPubsubToken) {
-            chatwoot.contactIdentifier = contactIdentifier;
-            chatwoot.contactPubsubToken = contactPubsubToken;
-            return;
-          }
-
-          try {
-            const targetUrl = `${chatwoot.chatwootAPIHost}/inboxes/${chatwoot.inboxIdentifier}/contacts`;
-            const data = await callProxy(targetUrl);
-            
-            chatwoot.contactIdentifier = data.source_id;
-            chatwoot.contactPubsubToken = data.pubsub_token;
-
-            setCookie('contactIdentifier', data.source_id, 30);
-            setCookie('contactPubsubToken', data.pubsub_token, 30);
-          } catch (error) {
-            console.error("Error al configurar el contacto vía proxy:", error);
-            throw error;
-          }
-        }
-
-        async function setUpConversation() {
-          let contactConverstion = getCookie('contactConverstion');
-          if (contactConverstion) {
-            chatwoot.contactConverstion = contactConverstion;
-            return;
-          }
-
-          try {
-            const targetUrl = `${chatwoot.chatwootAPIHost}/inboxes/${chatwoot.inboxIdentifier}/contacts/${chatwoot.contactIdentifier}/conversations`;
-            const data = await callProxy(targetUrl);
-
-            chatwoot.contactConverstion = data.id;
-            setCookie('contactConverstion', data.id, 30);
-          } catch (error) {
-            console.error("Error al configurar la conversación vía proxy:", error);
-            throw error;
-          }
-        }
-
-        async function sendMessage(msg) {
-          if (!chatwoot.contactConverstion) return;
-
-          try {
-            const targetUrl = `${chatwoot.chatwootAPIHost}/inboxes/${chatwoot.inboxIdentifier}/contacts/${chatwoot.contactIdentifier}/conversations/${chatwoot.contactConverstion}/messages`;
-            await callProxy(targetUrl, { content: msg });
-          } catch (error) {
-            console.error("Error al enviar el mensaje vía proxy:", error);
-          }
-        }
-
-        function setCookie(name, value, days) {
-          let expires = "";
-          if (days) {
-            let date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-          }
-          document.cookie = name + "=" + (value || "") + expires + "; path=/";
-        }
-
-        function getCookie(name) {
-          let nameEQ = name + "=";
-          let ca = document.cookie.split(';');
-          for (let i = 0; i < ca.length; i++) {
-            let c = ca[i].trim();
-            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-          }
-          return null;
-        }
-      });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
