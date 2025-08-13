@@ -11,6 +11,7 @@
     --bubble-outgoing: var(--primary);
     --bubble-incoming: #21262D;
     --header-height: 80px; /* Altura del nuevo header */
+    --bottom-area-height: 120px; /* Altura aproximada del área inferior */
 }
 
 body {
@@ -458,10 +459,12 @@ body.chat-active #messages-list {
         padding: 0;
     }
 
+    /* Oculta el botón de ofertas en móviles */
     .cta-button.primary {
         display: none;
     }
 
+    /* Ajuste para el header fijo en móviles */
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
@@ -488,7 +491,12 @@ body.chat-active #messages-list {
     }
 
     #messages-list {
-        padding: 1rem 1rem calc(var(--bottom-area-height) + 1rem); /* padding para evitar que los mensajes se superpongan */
+        padding: 1rem;
+        padding-bottom: var(--bottom-area-height);
+    }
+    
+    .initial-header {
+        max-width: calc(100% - 2rem);
     }
 
     .quick-actions {
@@ -513,6 +521,10 @@ body.chat-active #messages-list {
         z-index: 998;
     }
 
+    .quick-actions {
+        margin-bottom: 0.5rem;
+    }
+
     #message-form {
         margin-top: 0;
         padding: 1rem;
@@ -521,5 +533,9 @@ body.chat-active #messages-list {
     .cookie-notice {
         margin-top: 0;
         padding-top: 0;
+    }
+    
+    .fade-overlay {
+        height: 40px;
     }
 }
