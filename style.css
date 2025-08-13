@@ -1,88 +1,164 @@
-body {
-    font-family: sans-serif;
-    background-color: #f0f2f5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+/* --- Reseteo y Configuración General --- */
+:root {
+    --background: #0D1117; /* Azul muy oscuro, casi negro */
+    --surface: #161B22;   /* Un tono más claro para superficies como el input */
+    --primary: #2F81F7;   /* Azul brillante para acentos */
+    --text-primary: #E6EDF3; /* Texto principal blanco/gris claro */
+    --text-secondary: #7D8590; /* Texto secundario gris */
+    --bubble-outgoing: var(--primary);
+    --bubble-incoming: #21262D;
 }
 
-.chat-widget {
-    width: 350px;
-    height: 500px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background-color: white;
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--background);
+    color: var(--text-primary);
+    margin: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    align-items: center;
+    height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
-.chat-header {
-    background-color: #1f93ff;
-    color: white;
-    padding: 15px;
+/* --- Encabezado --- */
+header {
+    width: 100%;
     text-align: center;
+    padding: 2rem 1rem;
 }
 
-.chat-header h3 {
+header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
     margin: 0;
-    font-size: 1.1em;
 }
 
-.chat-messages {
+/* --- Contenedor Principal del Chat --- */
+#chat-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 720px; /* Un poco más ancho */
+    height: 100%;
+    max-height: 80vh;
+}
+
+/* --- Lista de Mensajes --- */
+#messages-list {
     flex-grow: 1;
-    padding: 15px;
+    padding: 1rem;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    gap: 0.75rem;
 }
 
-.user-message {
-    background-color: #1f93ff;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 18px;
-    margin-bottom: 10px;
-    max-width: 80%;
-    align-self: flex-end; /* Alinea los mensajes del usuario a la derecha */
-    word-wrap: break-word;
-}
-
-.chat-input-area {
-    display: flex;
-    padding: 15px;
-    border-top: 1px solid #e0e0e0;
-}
-
-#chat-input {
-    flex-grow: 1;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 10px 15px;
-    font-size: 1em;
-}
-
-#chat-input:focus {
-    outline: none;
-    border-color: #1f93ff;
-}
-
-#send-button {
-    background-color: #1f93ff;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    margin-left: 10px;
-    cursor: pointer;
-    font-size: 1.2em;
-    line-height: 40px;
+#loading-indicator {
     text-align: center;
+    padding: 2rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
-#send-button:hover {
-    background-color: #0077e6;
+/* --- Burbujas de Mensajes --- */
+.message {
+    padding: 0.75rem 1.25rem;
+    border-radius: 1.25rem;
+    max-width: 75%;
+    word-wrap: break-word;
+    line-height: 1.5;
+    font-size: 1rem;
+}
+
+.incoming {
+    background-color: var(--bubble-incoming);
+    color: var(--text-primary);
+    align-self: flex-start;
+    border-bottom-left-radius: 0.5rem;
+}
+
+.outgoing {
+    background-color: var(--bubble-outgoing);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 0.5rem;
+}
+
+
+/* --- Formulario de Envío (La parte más importante del cambio) --- */
+#message-form {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    background-color: var(--surface);
+    border-radius: 1rem;
+    border: 1px solid #30363D;
+}
+
+#message-input {
+    flex-grow: 1;
+    border: none;
+    background-color: transparent;
+    color: var(--text-primary);
+    padding: 0.75rem;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+}
+
+#message-input:focus {
+    outline: none;
+}
+
+#message-input::placeholder {
+    color: var(--text-secondary);
+}
+
+#message-form button {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.6rem 1rem;
+    background-color: var(--text-primary);
+    color: var(--background);
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+#message-form button:hover {
+    background-color: #cdd2d9;
+}
+
+#message-form button span {
+    line-height: 1;
+}
+
+/* Ocultar el scrollbar pero permitir scroll */
+#messages-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+/* --- Añadir al final de style.css --- */
+
+@keyframes slide-in-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message {
+    /* ... tus estilos existentes ... */
+    animation: slide-in-fade-in 0.4s ease-out;
 }
