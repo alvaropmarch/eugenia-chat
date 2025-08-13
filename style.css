@@ -59,10 +59,6 @@ body.chat-active .initial-header {
     overflow: hidden;
 }
 
-body.chat-active .fixed-header {
-    opacity: 1;
-}
-
 body.chat-active #main-content {
     justify-content: flex-start;
     flex-grow: 1;
@@ -94,7 +90,7 @@ body.chat-active .cookie-notice {
     padding: 0 2rem;
     box-sizing: border-box;
     z-index: 1000;
-    opacity: 0;
+    opacity: 1; /* Ahora visible por defecto */
     transition: opacity 0.5s ease-in-out;
 }
 
@@ -461,14 +457,15 @@ body.chat-active #messages-list {
     
     body.chat-active {
         padding-top: var(--header-height);
-        overflow: hidden; /* Evita que todo el body se desborde */
+        overflow-y: auto;
     }
 
-    .initial-header {
-        text-align: left;
+    /* Oculta el botón de ofertas en móviles */
+    .cta-button.primary {
+        display: none;
     }
 
-    /* El header fijo se mantiene visible en móviles */
+    /* Ajuste para el header fijo en móviles */
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
@@ -480,41 +477,29 @@ body.chat-active #messages-list {
         gap: 0.5rem;
     }
 
-    .cta-button.primary {
-        display: none;
-    }
-
     .cta-button.secondary {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
     }
+    
+    .fade-overlay {
+        display: none;
+    }
 
     #main-content {
         max-width: 100%;
-        padding: 0; /* Ajuste para el padding, se hace en los hijos */
+        padding: 0 1rem;
         height: 100vh;
         justify-content: center;
     }
 
     #chat-container {
         max-width: 100%;
-        height: 100%;
         max-height: 100%;
-        display: flex;
-        flex-direction: column;
     }
     
-    .fade-overlay {
-        height: 40px;
-        display: flex;
-    }
-
     #messages-list {
         padding: 1rem;
-        flex-grow: 1;
-        height: auto;
-        overflow-y: auto; /* Solo la lista de mensajes hace scroll */
-        padding-bottom: 200px; /* Espacio para el área de input fijo */
     }
     
     .quick-actions {
@@ -522,7 +507,7 @@ body.chat-active #messages-list {
         justify-content: flex-start;
         gap: 0.5rem;
     }
-    
+
     .quick-action-button {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
@@ -532,7 +517,7 @@ body.chat-active #messages-list {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
     }
-    
+
     #bottom-fixed-area {
         position: fixed;
         bottom: 0;
@@ -554,7 +539,8 @@ body.chat-active #messages-list {
     }
 
     .cookie-notice {
-        margin-top: 0;
+        margin-top: 0.5rem;
         padding-top: 0;
+        opacity: 1;
     }
 }
