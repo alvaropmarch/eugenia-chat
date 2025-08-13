@@ -3,15 +3,14 @@ $(function () {
 
   window.chatwoot = {
     inboxIdentifier: "7ACPGX9a461tb9fuKWWh5ij2",
-    // Esta es la URL base de la API de Chatwoot
-    chatwootAPIHost: "https://app.chatwoot.com/api/v1",
+    chatwootAPIHost: "[https://app.chatwoot.com/api/v1](https://app.chatwoot.com/api/v1)",
   };
 
   var content = $('#content');
   var input = $('#input');
   var status = $('#status');
 
-  var connection = new WebSocket('wss://app.chatwoot.com/cable');
+  var connection = new WebSocket('wss://[app.chatwoot.com/cable](https://app.chatwoot.com/cable)');
 
   connection.onopen = async function () {
     try {
@@ -75,9 +74,7 @@ $(function () {
     content.scrollTop(1000000);
   }
 
-  // Función genérica para llamar a nuestro proxy
   async function callProxy(targetUrl, body = null) {
-    // CORRECCIÓN: La URL correcta a nuestro proxy es /api/proxy
     const response = await fetch('/api/proxy', {
       method: "POST",
       headers: { "Content-Type": "application/json" },

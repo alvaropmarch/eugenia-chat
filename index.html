@@ -1,28 +1,35 @@
+### 1. `index.html`
+
+Este es el archivo principal de tu interfaz.
+
+```html
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Chatwoot - API Channel Test</title>
-
-        <style>
-        * { font-family:tahoma; font-size:12px; padding:0px; margin:0px; }
-        p { line-height:18px; }
-        div { width:500px; margin-left:auto; margin-right:auto;}
-        #content { padding:5px; background:#ddd; border-radius:5px; overflow-y: scroll;
-                   border:1px solid #CCC; margin-top:10px; height: 160px; }
-        #input { border-radius:2px; border:1px solid #ccc;
-                 margin-top:10px; padding:5px; width:400px;  }
-        #status { width:88px; display:block; float:left; margin-top:15px; }
-        </style>
-    </head>
-    <body>
+<head>
+    <title>Chatwoot Custom UI</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
+        #chat-container { width: 90%; max-width: 400px; height: 80vh; max-height: 600px; border: 1px solid #ddd; border-radius: 10px; background: #fff; display: flex; flex-direction: column; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        #content { flex: 1; overflow-y: auto; padding: 20px; border-bottom: 1px solid #eee; }
+        #content p { margin: 0 0 10px; line-height: 1.4; }
+        #content p span { font-weight: bold; color: #333; }
+        #input-area { padding: 15px; display: flex; flex-direction: column; }
+        #status { font-size: 0.8em; color: #888; margin-bottom: 5px; }
+        #input { border: 1px solid #ccc; padding: 10px; border-radius: 5px; width: 100%; box-sizing: border-box; font-size: 1em; }
+        #input:disabled { background: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
         <div id="content"></div>
-        <div>
-            <span id="status">Connecting...</span>
-            <input type="text" id="input" disabled="disabled" />
+        <div id="input-area">
+            <span id="status">Conectando...</span>
+            <input type="text" id="input" disabled="disabled" placeholder="Escribe tu mensaje y pulsa Enter..." />
         </div>
-
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-        <script src="./frontend.js"></script>
-    </body>
+    </div>
+    <script src="[https://code.jquery.com/jquery-3.6.0.min.js](https://code.jquery.com/jquery-3.6.0.min.js)"></script>
+    <script src="frontend.js"></script>
+</body>
 </html>
