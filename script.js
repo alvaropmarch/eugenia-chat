@@ -19,6 +19,7 @@ let conversationId = null;
 let pollingTimer = null;
 let typingTimer = null;
 let lastMessageSentAt = 0;
+let isWaitingForResponse = false; // Nuevo estado para controlar si estamos esperando respuesta
 
 // --- FUNCIONES ---
 
@@ -79,7 +80,6 @@ async function fetchAllMessages() {
 
         // Actualizamos el estado de mensajes directamente con la respuesta del servidor
         messagesState = data;
-
         renderAllMessages();
 
         // Oculta el indicador de typing si el último mensaje es del bot
@@ -87,6 +87,10 @@ async function fetchAllMessages() {
         if (lastMsg && (!lastMsg.sender || lastMsg.sender.type !== 'contact')) {
             typingIndicator.style.display = 'none';
             if (typingTimer) clearTimeout(typingTimer);
+            // Si el último mensaje es del bot, re-habilita el formulario
+            messageInput.disabled = false;
+            messageForm.querySelector('button').disabled = false;
+            isWaitingForResponse = false;
         }
     } catch (error) {
         console.error("Error durante el sondeo de mensajes:", error);
@@ -126,7 +130,12 @@ async function ensureConversation() {
 async function handleSendMessageForm(event) {
     event.preventDefault();
     const content = messageInput.value.trim();
-    if (!content || !contactIdentifier) return;
+    if (!content || !contactIdentifier || isWaitingForResponse) return;
+
+    // Deshabilita el formulario para evitar que el usuario escriba de nuevo
+    messageInput.disabled = true;
+    messageForm.querySelector('button').disabled = true;
+    isWaitingForResponse = true;
 
     messageInput.value = '';
 
@@ -153,18 +162,26 @@ async function handleSendMessageForm(event) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content }),
         });
-        // Tras enviar, forzamos un ciclo de polling para que el mensaje aparezca.
         await fetchAllMessages();
     } catch (error) {
         console.error("Error al enviar mensaje:", error);
+        // En caso de error, volvemos a habilitar el formulario
+        messageInput.disabled = false;
+        messageForm.querySelector('button').disabled = false;
+        isWaitingForResponse = false;
     }
 }
 
 async function handleFileSelect(event) {
     const file = event.target.files[0];
-    if (!file) return;
+    if (!file || isWaitingForResponse) return;
 
     try {
+        // Deshabilita el formulario
+        messageInput.disabled = true;
+        messageForm.querySelector('button').disabled = true;
+        isWaitingForResponse = true;
+        
         await ensureConversation();
         
         const formData = new FormData();
@@ -183,7 +200,6 @@ async function handleFileSelect(event) {
             body: formData,
         });
         
-        // Tras subir el archivo, forzamos un ciclo de polling para que el mensaje aparezca.
         await fetchAllMessages();
     } catch (error) {
         console.error("Error al subir archivo:", error);
