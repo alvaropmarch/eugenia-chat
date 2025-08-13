@@ -20,11 +20,8 @@ export default async function handler(req, res) {
       body: body ? JSON.stringify(body) : null,
     });
 
-    // Leemos la respuesta como texto para evitar errores si no es JSON
     const responseText = await chatwootResponse.text();
     
-    // Devolvemos la respuesta exacta que nos dio Chatwoot.
-    // Es importante establecer la cabecera Content-Type correcta.
     res.setHeader('Content-Type', 'application/json');
     res.status(chatwootResponse.status).send(responseText);
 
