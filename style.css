@@ -49,7 +49,7 @@ body {
 body.chat-active {
     justify-content: flex-start;
     padding-top: var(--header-height);
-    overflow-y: auto; /* Habilita el scroll una vez que el chat se activa */
+    overflow: auto; /* Habilita el scroll una vez que el chat se activa */
 }
 
 body.chat-active .initial-header {
@@ -57,10 +57,6 @@ body.chat-active .initial-header {
     pointer-events: none;
     height: 0;
     overflow: hidden;
-}
-
-body.chat-active .fixed-header {
-    opacity: 1;
 }
 
 body.chat-active #main-content {
@@ -94,7 +90,7 @@ body.chat-active .cookie-notice {
     padding: 0 2rem;
     box-sizing: border-box;
     z-index: 1000;
-    opacity: 0;
+    opacity: 1; /* Ahora visible por defecto */
     transition: opacity 0.5s ease-in-out;
 }
 
@@ -460,10 +456,16 @@ body.chat-active #messages-list {
     }
     
     body.chat-active {
+        padding-top: var(--header-height);
         overflow-y: auto;
     }
 
-    /* El header fijo se mantiene visible en móviles */
+    /* Oculta el botón de ofertas en móviles */
+    .cta-button.primary {
+        display: none;
+    }
+
+    /* Ajuste para el header fijo en móviles */
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
@@ -475,13 +477,13 @@ body.chat-active #messages-list {
         gap: 0.5rem;
     }
 
-    .cta-button.primary {
-        display: none;
-    }
-
     .cta-button.secondary {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
+    }
+    
+    .fade-overlay {
+        display: none;
     }
 
     #main-content {
@@ -493,14 +495,10 @@ body.chat-active #messages-list {
 
     #chat-container {
         max-width: 100%;
+        height: 100%;
         max-height: 100%;
     }
     
-    .fade-overlay {
-        height: 40px;
-        display: flex; /* Ahora se mantiene visible y se ajusta */
-    }
-
     #messages-list {
         padding: 1rem;
     }
@@ -509,18 +507,6 @@ body.chat-active #messages-list {
         flex-wrap: wrap;
         justify-content: flex-start;
         gap: 0.5rem;
-    }
-    
-    .quick-action-button:nth-child(1) {
-        order: 1;
-    }
-    
-    .quick-action-button:nth-child(2) {
-        order: 2;
-    }
-    
-    .quick-action-button:nth-child(3) {
-        order: 3;
     }
 
     .quick-action-button {
@@ -554,7 +540,8 @@ body.chat-active #messages-list {
     }
 
     .cookie-notice {
-        margin-top: 0;
+        margin-top: 0.5rem;
         padding-top: 0;
+        opacity: 1;
     }
 }
