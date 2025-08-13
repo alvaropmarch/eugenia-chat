@@ -2,9 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURACIÓN ---
     // ¡IMPORTANTE! Estos valores los configurarás en Vercel como variables de entorno.
     // Para pruebas locales, puedes ponerlos aquí directamente.
-    const CHATWOOT_URL = 'https://app.chatwoot.com'; // O tu URL si es auto-alojado
-    const WEBSITE_TOKEN = 'TU_WEBSITE_TOKEN';      // El token de tu canal "Website"
-
+   const CHATWOOT_URL = import.meta.env.VITE_CHATWOOT_URL ;
+   const WEBSITE_TOKEN = import.meta.env.VITE_WEBSITE_TOKEN ;
     // --- ELEMENTOS DEL DOM ---
     const sendButton = document.getElementById('send-button');
     const chatInput = document.getElementById('chat-input');
