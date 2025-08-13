@@ -26,6 +26,7 @@ body {
     height: 100vh;
     box-sizing: border-box;
     transition: all 0.5s ease;
+    overflow: hidden; /* Deshabilita el scroll en la pantalla de inicio */
 }
 
 /* Contenedor principal para el centrado inicial */
@@ -46,6 +47,7 @@ body {
 body.chat-active {
     justify-content: flex-start;
     padding-top: var(--header-height);
+    overflow: auto; /* Habilita el scroll una vez que el chat se activa */
 }
 
 body.chat-active .initial-header {
@@ -456,40 +458,24 @@ body.chat-active #messages-list {
         padding: 0;
     }
 
+    /* Oculta el botón de ofertas en móviles */
+    .cta-button.primary {
+        display: none;
+    }
+
     /* Ajuste para el header fijo en móviles */
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
     }
 
-    .header-logo span {
-        display: none;
-    }
-
     .header-actions {
         gap: 0.5rem;
     }
 
-    .cta-button {
+    .cta-button.secondary {
         padding: 0.5rem 1rem;
         font-size: 0.8rem;
-    }
-    
-    .cta-button.primary span {
-        display: none;
-    }
-
-    .cta-button.primary {
-        padding: 0.5rem;
-        border-radius: 50%;
-        width: 38px;
-        height: 38px;
-    }
-
-    .cta-button.primary svg {
-        width: 1em;
-        height: 1em;
-        margin: auto;
     }
 
     /* Ajuste para el contenido principal */
@@ -501,6 +487,13 @@ body.chat-active #messages-list {
     /* Ajuste para el chat container */
     #chat-container {
         max-width: 100%;
+    }
+
+    /* Los botones de acción rápida ahora se ajustan en varias líneas */
+    .quick-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
     }
 
     /* Ajuste para los mensajes y el input */
