@@ -1,6 +1,6 @@
 // --- CONFIGURACIÓN ---
-const CHATWOOT_URL = 'app.chatwoot.com';
-const INBOX_IDENTIFIER = '7ACPGX9a461tb9fuKWWh5ij2';
+const CHATWOOT_URL = 'support.v2charge.com';
+const INBOX_IDENTIFIER = '4uYj27uPSc8DmYuYcZ4tL1LT';
 const POLLING_INTERVAL = 3000;
 
 // --- ELEMENTOS DEL DOM ---
