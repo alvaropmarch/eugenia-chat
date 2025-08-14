@@ -13,249 +13,282 @@ const fileInput = document.getElementById('file-input');
 const quickActionButtons = document.querySelectorAll('.quick-action-button');
 const quickActionsContainer = document.querySelector('.quick-actions');
 const body = document.body;
-const mainContent = document.getElementById('main-content');
-const fixedHeader = document.querySelector('.fixed-header');
-const initialHeader = document.querySelector('.initial-header');
-const fadeOverlay = document.querySelector('.fade-overlay');
-const cookieNotice = document.querySelector('.cookie-notice');
 
 // --- GESTIÓN DE ESTADO ---
-let messagesState = [];
-let contactIdentifier = null;
-let conversationId = null;
-let pollingTimer = null;
-let typingTimer = null;
-let lastMessageSentAt = 0;
-let isWaitingForResponse = false;
-let isFirstMessageSent = false;
+const state = {
+    messages: [],
+    contactIdentifier: null,
+    conversationId: null,
+    pollingTimer: null,
+    typingTimer: null,
+    lastMessageSentAt: 0,
+    isWaitingForResponse: false,
+    isChatActive: false,
+};
 
 // --- FUNCIONES ---
 
 /**
- * Renderiza de forma incremental solo los mensajes nuevos.
+ * Renderiza todos los mensajes en la lista, ordenados por fecha.
  */
 function renderAllMessages() {
-    messagesState.sort((a, b) => (a.created_at || a.created_at_utc) - (b.created_at || b.created_at_utc));
-    const renderedIds = new Set(Array.from(messagesList.querySelectorAll('.message')).map(div => div.dataset.id));
+    state.messages.sort((a, b) => a.created_at - b.created_at);
+    
+    // Guardamos una referencia al indicador de escritura si existe
+    const typingIndicatorIsVisible = typingIndicator.style.display !== 'none';
+    messagesList.innerHTML = ''; 
 
-    messagesState.forEach(msg => {
-        const msgId = msg.id;
-        if (renderedIds.has(String(msgId))) return;
-
+    state.messages.forEach(msg => {
         const type = msg.sender && msg.sender.type === 'contact' ? 'outgoing' : 'incoming';
         const messageDiv = document.createElement('div');
         messageDiv.classList.add('message', type);
-        messageDiv.dataset.id = msgId;
+        messageDiv.dataset.id = String(msg.id);
 
+        // Si el mensaje tiene adjuntos, crea un enlace
         if (msg.attachments && msg.attachments.length > 0) {
+            const attachment = msg.attachments[0];
             const attachmentLink = document.createElement('a');
-            attachmentLink.href = msg.attachments[0].data_url;
-            attachmentLink.textContent = msg.content || `Archivo: ${msg.attachments[0].file_name}`;
+            attachmentLink.href = attachment.data_url;
             attachmentLink.target = '_blank';
+            attachmentLink.rel = 'noopener noreferrer';
+
+            // Comprueba si es una imagen para mostrar una miniatura
+            if (attachment.file_type === 'image') {
+                const img = document.createElement('img');
+                img.src = attachment.data_url;
+                img.alt = attachment.file_name || 'Imagen adjunta';
+                img.classList.add('message-image');
+                attachmentLink.appendChild(img);
+                if (msg.content) {
+                    const caption = document.createElement('span');
+                    caption.textContent = msg.content;
+                    attachmentLink.appendChild(caption);
+                }
+            } else {
+                // Para otros archivos, muestra el texto o el nombre del archivo
+                attachmentLink.textContent = msg.content || `Archivo: ${attachment.file_name}`;
+            }
             messageDiv.appendChild(attachmentLink);
         } else {
+            // Si no hay adjuntos, solo muestra el texto
             messageDiv.textContent = msg.content;
         }
-        // Cambio para que los nuevos mensajes se añadan al principio de la lista.
-        // Esto, junto con el CSS flex-direction: column-reverse, hará que se muestren en la parte inferior.
+        
+        // Usamos prepend para que con CSS (column-reverse) aparezcan abajo
         messagesList.prepend(messageDiv);
     });
-
-    if (typingIndicator.style.display !== 'none') {
-        // También usamos prepend para que el indicador de escritura aparezca en la parte inferior.
+    
+    // Volvemos a añadir el indicador si estaba visible
+    if (typingIndicatorIsVisible) {
         messagesList.prepend(typingIndicator);
     }
     
-    // Llamada a la función de scroll para que el foco esté en los mensajes nuevos.
     scrollToBottom();
 }
 
 /**
- * Hace scroll hacia la parte inferior de la lista de mensajes.
+ * Hace scroll suave hacia el final de la lista de mensajes.
  */
 function scrollToBottom() {
     if (messagesList) {
-        // Usa `scrollHeight` para asegurar que el scroll vaya hasta el final.
         messagesList.scrollTo({ top: messagesList.scrollHeight, behavior: 'smooth' });
     }
 }
 
+/**
+ * Busca nuevos mensajes del agente a intervalos regulares.
+ */
 async function fetchAllMessages() {
-    if (!conversationId) return;
+    if (!state.conversationId || !state.contactIdentifier) return;
     try {
-        const response = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${contactIdentifier}/conversations/${conversationId}/messages`);
+        const response = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${state.contactIdentifier}/conversations/${state.conversationId}/messages`);
         if (!response.ok) throw new Error('No se pudieron obtener los mensajes.');
         const data = await response.json();
 
-        messagesState = data;
-        renderAllMessages();
+        // Evita re-renderizar si no hay mensajes nuevos
+        if (data.length > state.messages.length) {
+            state.messages = data;
+            renderAllMessages();
+        }
 
-        const lastMsg = messagesState[messagesState.length - 1];
-        if (lastMsg && (!lastMsg.sender || lastMsg.sender.type !== 'contact')) {
+        // Si el último mensaje es del agente, para el indicador de "escribiendo"
+        const lastMsg = data[data.length - 1];
+        if (lastMsg && lastMsg.message_type !== 0) { // 0 es 'outgoing'
             typingIndicator.style.display = 'none';
-            if (typingTimer) clearTimeout(typingTimer);
-            messageInput.disabled = false;
-            messageForm.querySelector('button').disabled = false;
-            isWaitingForResponse = false;
+            if (state.typingTimer) clearTimeout(state.typingTimer);
+            setFormDisabled(false);
+            state.isWaitingForResponse = false;
         }
     } catch (error) {
         console.error("Error durante el sondeo de mensajes:", error);
     }
 }
 
+/**
+ * Se asegura de que exista una conversación activa.
+ */
 async function ensureConversation() {
-    if (!conversationId) {
-        const convResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${contactIdentifier}/conversations`, {
-            method: 'POST',
-        });
-        if (!convResponse.ok) throw new Error('Error al crear la conversación.');
-        const conversation = await convResponse.json();
-        conversationId = conversation.id;
-        if (pollingTimer) clearInterval(pollingTimer);
-        pollingTimer = setInterval(fetchAllMessages, POLLING_INTERVAL);
-    }
+    if (state.conversationId) return; // Si ya tenemos una, no hace nada
+    
+    const convResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${state.contactIdentifier}/conversations`, {
+        method: 'POST',
+    });
+    if (!convResponse.ok) throw new Error('Error al crear la conversación.');
+    const conversation = await convResponse.json();
+    state.conversationId = conversation.id;
+    
+    if (state.pollingTimer) clearInterval(state.pollingTimer);
+    state.pollingTimer = setInterval(fetchAllMessages, POLLING_INTERVAL);
 }
 
+/**
+ * Crea el contacto si no existe, y activa el layout del chat.
+ */
+async function initializeChatIfNeeded() {
+    if (state.isChatActive) {
+        await ensureConversation();
+        return;
+    }
+
+    if (!state.contactIdentifier) {
+        const contactResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: `Visitante ${Math.floor(Math.random() * 1000)}` }),
+        });
+        if (!contactResponse.ok) throw new Error('Error al crear el contacto.');
+        const contact = await contactResponse.json();
+        state.contactIdentifier = contact.source_id;
+    }
+    
+    activateChatLayout();
+    await ensureConversation();
+}
+
+/**
+ * Activa o desactiva los controles del formulario.
+ */
+function setFormDisabled(isDisabled) {
+    messageInput.disabled = isDisabled;
+    messageForm.querySelector('button[type="submit"]').disabled = isDisabled;
+    attachFileButton.disabled = isDisabled;
+    state.isWaitingForResponse = isDisabled;
+}
+
+/**
+ * Muestra el indicador de "escribiendo" con un pequeño retardo.
+ */
+function showTypingIndicatorWithDelay() {
+    if (state.typingTimer) clearTimeout(state.typingTimer);
+    state.typingTimer = setTimeout(() => {
+        typingIndicator.style.display = 'flex';
+        renderAllMessages(); // Re-renderizar para añadir el indicador
+    }, 1000); // Un retardo simple de 1 segundo
+}
+
+/**
+ * Gestiona el envío de un mensaje de texto.
+ */
 async function handleSendMessageForm(event) {
     event.preventDefault();
     const content = messageInput.value.trim();
-    if (!content || isWaitingForResponse) return;
+    if (!content || state.isWaitingForResponse) return;
 
-    if (!contactIdentifier) {
-        console.log("Iniciando conversación...");
-        try {
-            const contactResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: `Visitante ${Math.floor(Math.random() * 1000)}` }),
-            });
-            if (!contactResponse.ok) throw new Error('Error al crear el contacto.');
-            const contact = await contactResponse.json();
-            contactIdentifier = contact.source_id;
-        } catch (error) {
-            console.error(`Error al iniciar: ${error.message}`);
-            return;
-        }
-    }
-
-    activateChatLayout();
-
-    if (quickActionsContainer) {
-        quickActionsContainer.style.display = 'none';
-    }
-
-    messageInput.disabled = true;
-    messageForm.querySelector('button').disabled = true;
-    isWaitingForResponse = true;
-
-    messageInput.value = '';
-
-    const now = Date.now();
-    let delay = 3000;
-    if (now - lastMessageSentAt < 2000) {
-        typingIndicator.style.display = 'none';
-        if (typingTimer) clearTimeout(typingTimer);
-        delay = 2000;
-    }
-    lastMessageSentAt = now;
-
-    if (typingTimer) clearTimeout(typingTimer);
-    typingTimer = setTimeout(() => {
-        typingIndicator.style.display = 'flex';
-        renderAllMessages();
-        scrollToBottom();
-    }, delay);
+    setFormDisabled(true);
+    showTypingIndicatorWithDelay();
 
     try {
-        await ensureConversation();
-        await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${contactIdentifier}/conversations/${conversationId}/messages`, {
+        await initializeChatIfNeeded();
+        const response = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${state.contactIdentifier}/conversations/${state.conversationId}/messages`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content }),
         });
-        await fetchAllMessages();
+        if (!response.ok) throw new Error('Error en la API al enviar mensaje.');
+        const newMessage = await response.json();
+        
+        state.messages.push(newMessage);
+        renderAllMessages();
+        messageInput.value = ''; // Limpiar el input después de enviar
     } catch (error) {
         console.error("Error al enviar mensaje:", error);
-        messageInput.disabled = false;
-        messageForm.querySelector('button').disabled = false;
-        isWaitingForResponse = false;
+        setFormDisabled(false); // Reactivar formulario en caso de error
     }
 }
 
+/**
+ * Gestiona la selección y subida de un archivo.
+ */
 async function handleFileSelect(event) {
     const file = event.target.files[0];
-    if (!file || isWaitingForResponse) return;
+    if (!file) return;
 
-    if (!contactIdentifier) {
-        console.log("Iniciando conversación...");
-        try {
-            const contactResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: `Visitante ${Math.floor(Math.random() * 1000)}` }),
-            });
-            if (!contactResponse.ok) throw new Error('Error al crear el contacto.');
-            const contact = await contactResponse.json();
-            contactIdentifier = contact.source_id;
-        } catch (error) {
-            console.error(`Error al iniciar: ${error.message}`);
-            return;
-        }
+    if (state.isWaitingForResponse) {
+        alert("Por favor, espera una respuesta antes de enviar otro archivo.");
+        return;
     }
 
+    setFormDisabled(true);
+    showTypingIndicatorWithDelay();
+
     try {
-        activateChatLayout();
-
-        if (quickActionsContainer) {
-            quickActionsContainer.style.display = 'none';
-        }
-
-        messageInput.disabled = true;
-        messageForm.querySelector('button').disabled = true;
-        isWaitingForResponse = true;
-        
-        await ensureConversation();
+        await initializeChatIfNeeded();
         
         const formData = new FormData();
         formData.append('attachment', file);
-        formData.append('conversationId', conversationId);
-        if (messageInput.value.trim()) {
-            formData.append('content', messageInput.value.trim());
-            messageInput.value = '';
+        formData.append('conversationId', state.conversationId);
+        
+        const textContent = messageInput.value.trim();
+        if (textContent) {
+            formData.append('content', textContent);
         }
 
-        typingIndicator.style.display = 'flex';
-        scrollToBottom();
-
-        await fetch('/api/upload', {
+        const response = await fetch('/api/upload', {
             method: 'POST',
             body: formData,
         });
-        
-        await fetchAllMessages();
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Error desconocido al subir el archivo.');
+        }
+
+        state.messages.push(result.data);
+        renderAllMessages();
+        messageInput.value = '';
+
     } catch (error) {
-        console.error("Error al subir archivo:", error);
-        alert('No se pudo subir el archivo.');
+        console.error("Error al subir archivo:", error.message);
+        alert(`No se pudo subir el archivo: ${error.message}`);
+        
+        // Si hay un error, ocultamos el indicador de "escribiendo" y reactivamos el form
+        typingIndicator.style.display = 'none';
+        setFormDisabled(false);
     } finally {
+        // Limpiamos el valor del input para poder seleccionar el mismo archivo otra vez
         fileInput.value = '';
     }
 }
 
-// Función para activar el layout del chat después del primer mensaje
+/**
+ * Cambia el layout de la página para mostrar el chat activo.
+ */
 function activateChatLayout() {
-    if (!isFirstMessageSent) {
-        body.classList.add('chat-active');
-        messagesList.style.display = 'flex'; // Muestra la lista de mensajes
-        isFirstMessageSent = true;
+    if (state.isChatActive) return;
+    
+    body.classList.add('chat-active');
+    messagesList.style.display = 'flex';
+    if (quickActionsContainer) {
+        quickActionsContainer.style.display = 'none';
     }
+    state.isChatActive = true;
 }
 
 // --- INICIO DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Código para gestionar la altura del viewport en iOS
     function setVh() {
-        let vh = window.innerHeight * 0.01;
-        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
     }
 
     setVh();
@@ -264,7 +297,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const defaultMessage = "Hola! Quiero ahorrar en mi factura de la luz";
     messageInput.value = defaultMessage;
     
-    // Asignar el botón activo por defecto al cargar la página
     const defaultButton = document.querySelector('.quick-action-button');
     if (defaultButton) {
         defaultButton.classList.add('is-active');
@@ -278,8 +310,8 @@ document.addEventListener('DOMContentLoaded', () => {
         button.addEventListener('click', () => {
             quickActionButtons.forEach(btn => btn.classList.remove('is-active'));
             button.classList.add('is-active');
-            
             messageInput.value = button.dataset.message;
+            messageInput.focus();
         });
     });
 });

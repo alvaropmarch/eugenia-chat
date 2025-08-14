@@ -1,9 +1,8 @@
-// /api/upload.js (Versión Corregida)
+// /api/upload.js
 
 import { IncomingForm } from 'formidable';
 import fs from 'fs';
-import axios from 'axios';
-import FormData from 'form-data';
+import { URL } from 'url';
 
 export const config = {
     api: {
@@ -12,14 +11,16 @@ export const config = {
 };
 
 export default async function handler(req, res) {
-    const { CHATWOOT_API_ACCESS_TOKEN, CHATWOOT_ACCOUNT_ID } = process.env;
-
     if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+        return res.status(405).json({ error: 'Método no permitido' });
     }
 
-    if (!CHATWOOT_API_ACCESS_TOKEN || !CHATWOOT_ACCOUNT_ID) {
-        console.error("Variables de entorno del servidor no configuradas.");
+    const CHATWOOT_URL = process.env.CHATWOOT_URL;
+    const CHATWOOT_API_ACCESS_TOKEN = process.env.CHATWOOT_API_ACCESS_TOKEN;
+    const CHATWOOT_ACCOUNT_ID = process.env.CHATWOOT_ACCOUNT_ID;
+
+    if (!CHATWOOT_URL || !CHATWOOT_API_ACCESS_TOKEN || !CHATWOOT_ACCOUNT_ID) {
+        console.error("Error: Faltan variables de entorno del servidor.");
         return res.status(500).json({ error: 'Configuración del servidor incompleta.' });
     }
 
@@ -33,9 +34,7 @@ export default async function handler(req, res) {
         });
 
         const conversationId = Array.isArray(fields.conversationId) ? fields.conversationId[0] : fields.conversationId;
-        const content = Array.isArray(fields.content) ? fields.content[0] : fields.content || '';
-        
-        // **CORRECCIÓN CLAVE:** 'formidable' devuelve los archivos en un array. Accedemos al primer elemento.
+        const content = Array.isArray(fields.content) ? fields.content[0] : (fields.content || '');
         const attachment = files.attachment ? files.attachment[0] : null;
 
         if (!conversationId || !attachment) {
@@ -43,24 +42,37 @@ export default async function handler(req, res) {
         }
 
         const chatwootFormData = new FormData();
-        chatwootFormData.append('content', content);
-        chatwootFormData.append('attachments[]', fs.createReadStream(attachment.filepath), attachment.originalFilename);
-
-        const CHATWOOT_URL = 'https://app.chatwoot.com';
-        const endpoint = `${CHATWOOT_URL}/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversationId}/messages`;
-
-        const response = await axios.post(endpoint, chatwootFormData, {
-            headers: {
-                ...chatwootFormData.getHeaders(),
-                'api_access_token': CHATWOOT_API_ACCESS_TOKEN,
-            },
-        });
         
-        res.status(200).json({ success: true, data: response.data });
+        chatwootFormData.append('content', content);
+        // ¡CORREGIDO! Ahora el mensaje se registrará como enviado por el usuario.
+        chatwootFormData.append('message_type', 'incoming'); 
+        
+        const fileBuffer = fs.readFileSync(attachment.filepath);
+        const fileBlob = new Blob([fileBuffer], { type: attachment.mimetype });
+        
+        chatwootFormData.append('attachments[]', fileBlob, attachment.originalFilename || 'archivo_subido');
+
+        const endpoint = new URL(`/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversationId}/messages`, `https://${CHATWOOT_URL}`);
+        
+        const response = await fetch(endpoint.toString(), {
+            method: 'POST',
+            headers: {
+                'api-access-token': CHATWOOT_API_ACCESS_TOKEN,
+                'Authorization': `Bearer ${CHATWOOT_API_ACCESS_TOKEN}`,
+            },
+            body: chatwootFormData,
+        });
+
+        const responseData = await response.json();
+
+        if (!response.ok) {
+            throw new Error(responseData.message || 'Error en la API de Chatwoot');
+        }
+
+        res.status(200).json({ success: true, data: responseData });
 
     } catch (error) {
-        // Esto mostrará el error detallado en la consola de 'vercel dev'
-        console.error('Error detallado en el backend:', error.response ? error.response.data : error.message);
-        res.status(500).json({ error: 'No se pudo subir el archivo.' });
+        console.error('Error en el backend al subir archivo:', error.message);
+        res.status(500).json({ error: error.message });
     }
 }
