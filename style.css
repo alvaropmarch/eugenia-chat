@@ -265,6 +265,89 @@ body.chat-active #messages-list {
     border-bottom-right-radius: 0.5rem;
 }
 
+/* --- ESTILOS PARA IMÁGENES ADJUNTAS --- */
+.message-image {
+    max-width: 100%; /* La clave: la imagen nunca será más ancha que su contenedor */
+    height: auto;    /* Mantiene la proporción correcta de la imagen */
+    display: block;  /* Evita espacios extraños debajo de la imagen */
+    border-radius: 1.25rem; /* Bordes redondeados consistentes con las burbujas */
+    cursor: pointer;
+    border: 1px solid #282A33; /* Un borde sutil que encaja con tu diseño */
+    transition: opacity 0.2s ease;
+}
+
+.message-image:hover {
+    opacity: 0.85; /* Un pequeño efecto visual al pasar el ratón por encima */
+}
+
+/* Ajustamos el radio de la esquina para que coincida con la "cola" de la burbuja */
+.message.incoming .message-image {
+    border-bottom-left-radius: 0.5rem;
+}
+
+.message.outgoing .message-image {
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Modificación para que la burbuja del mensaje que contiene un adjunto (imagen o file) no tenga padding extra */
+.message:has(.file-attachment-link),
+.message:has(.message-image) {
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+/* --- ESTILOS PARA ADJUNTOS (archivos no-imagen) --- */
+.file-attachment {
+    display: flex;
+    align-items: center;
+    border: 1px solid #282A33;
+    border-radius: 1.25rem;
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.file-attachment-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
+.file-icon {
+    font-size: 1.5rem;
+    margin-right: 12px;
+}
+
+.file-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.message-caption {
+    display: block;
+    margin-top: 8px;
+    font-size: 1rem;
+    padding: 0 5px;
+    color: var(--text-secondary);
+}
+
+.message.incoming .file-attachment {
+    background-color: var(--bubble-incoming);
+    border-bottom-left-radius: 0.5rem;
+}
+.message.incoming .file-attachment:hover {
+    background-color: #2a3038;
+}
+
+.message.outgoing .file-attachment {
+    background-color: #1D1F28;
+    border-color: #282A33;
+    border-bottom-right-radius: 0.5rem;
+}
+.message.outgoing .file-attachment:hover {
+    background-color: #232532;
+}
 
 /* --- Formulario de Envío --- */
 #message-form {
@@ -278,14 +361,12 @@ body.chat-active #messages-list {
     border: 2px solid #282A33;
     box-sizing: border-box;
     width: 100%;
-    /* Estilos para hacerlo fijo en la parte inferior */
     position: sticky;
     bottom: 0;
     left: 0;
-    z-index: 10; /* Asegura que esté por encima de otros elementos */
+    z-index: 10;
 }
 
-/* Input ocupa todo el espacio entre los botones */
 #message-input {
     width: 100%;
     background: transparent !important;
@@ -299,7 +380,6 @@ body.chat-active #messages-list {
     box-shadow: none;
 }
 
-/* Placeholder del input */
 #message-input::placeholder {
     color: #8C90A1 !important;
     opacity: 1;
@@ -307,7 +387,6 @@ body.chat-active #messages-list {
     font-family: 'DM Sans', sans-serif;
 }
 
-/* Acciones abajo, botones a los extremos */
 .message-form-actions {
     display: flex;
     flex-direction: row;
@@ -316,7 +395,6 @@ body.chat-active #messages-list {
     width: 100%;
 }
 
-/* Botón de adjuntar a la izquierda */
 #attach-file-button {
     background: transparent !important;
     color: #E6EDF3 !important;
@@ -364,13 +442,11 @@ body.chat-active #messages-list {
     background-color: #dbe3ea;
 }
 
-/* Ocultar el scrollbar pero permitir scroll */
 #messages-list::-webkit-scrollbar {
     width: 0;
     height: 0;
 }
 
-/* Estilos para el contenedor del indicador */
 #typing-indicator {
     display: flex;
     align-items: center;
@@ -378,7 +454,6 @@ body.chat-active #messages-list {
     padding: 0.9rem 1.25rem;
 }
 
-/* Estilos para cada punto */
 .typing-dot {
     width: 8px;
     height: 8px;
@@ -395,7 +470,6 @@ body.chat-active #messages-list {
     animation-delay: -0.16s;
 }
 
-/* Animación de pulso */
 @keyframes pulse {
     0%, 80%, 100% {
         transform: scale(0);
@@ -464,15 +538,12 @@ body.chat-active #messages-list {
     
     body.chat-active {
         padding-top: var(--header-height);
-        /* Elimina overflow-y: auto; aquí para evitar scroll en el body */
     }
 
-    /* Oculta el botón de ofertas en móviles */
     .cta-button.primary {
         display: none;
     }
 
-    /* Ajuste para el header fijo en móviles */
     .fixed-header {
         height: 60px;
         padding: 0 1rem;
@@ -496,13 +567,10 @@ body.chat-active #messages-list {
     #main-content {
         max-width: 100%;
         padding: 0 1rem;
-        /* Elimina la altura fija: height: 100vh; */
         justify-content: center;
-        /* Usa flexbox para distribuir el espacio */
         height: auto;
     }
 
-    /* Esta es la clave: el chat-container debe ser el contenedor flex */
     body.chat-active #main-content {
         justify-content: flex-start;
     }
@@ -512,8 +580,6 @@ body.chat-active #messages-list {
         display: flex;
         flex-direction: column;
     }
-    
-
     
     .quick-actions {
         flex-wrap: wrap;
@@ -531,10 +597,25 @@ body.chat-active #messages-list {
         font-size: 0.9rem;
     }
 
+    /* Ajustes responsivos para adjuntos */
+    .file-attachment {
+        padding: 8px 12px;
+    }
+    .file-icon {
+        font-size: 1.3rem;
+        margin-right: 10px;
+    }
+    .file-name {
+        font-size: 0.9rem;
+    }
+    .message-caption {
+        font-size: 0.9rem;
+    }
+
     #message-form {
         margin-top: 0;
         padding: 1rem;
-        position: sticky; /* O position: fixed; */
+        position: sticky;
         bottom: 0;
     }
     

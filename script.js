@@ -34,7 +34,6 @@ const state = {
 function renderAllMessages() {
     state.messages.sort((a, b) => a.created_at - b.created_at);
     
-    // Guardamos una referencia al indicador de escritura si existe
     const typingIndicatorIsVisible = typingIndicator.style.display !== 'none';
     messagesList.innerHTML = ''; 
 
@@ -44,47 +43,90 @@ function renderAllMessages() {
         messageDiv.classList.add('message', type);
         messageDiv.dataset.id = String(msg.id);
 
-        // Si el mensaje tiene adjuntos, crea un enlace
         if (msg.attachments && msg.attachments.length > 0) {
             const attachment = msg.attachments[0];
-            const attachmentLink = document.createElement('a');
-            attachmentLink.href = attachment.data_url;
-            attachmentLink.target = '_blank';
-            attachmentLink.rel = 'noopener noreferrer';
-
-            // Comprueba si es una imagen para mostrar una miniatura
+            
+            // Si es una imagen, la mostramos como antes.
             if (attachment.file_type === 'image') {
+                const attachmentLink = document.createElement('a');
+                attachmentLink.href = attachment.data_url;
+                attachmentLink.target = '_blank';
+                attachmentLink.rel = 'noopener noreferrer';
+                
                 const img = document.createElement('img');
                 img.src = attachment.data_url;
                 img.alt = attachment.file_name || 'Imagen adjunta';
                 img.classList.add('message-image');
                 attachmentLink.appendChild(img);
+                messageDiv.appendChild(attachmentLink);
+
+                // El caption (texto del mensaje) va debajo de la imagen
                 if (msg.content) {
                     const caption = document.createElement('span');
+                    caption.classList.add('message-caption'); // Clase para estilizar
                     caption.textContent = msg.content;
-                    attachmentLink.appendChild(caption);
+                    messageDiv.appendChild(caption);
                 }
+
             } else {
-                // Para otros archivos, muestra el texto o el nombre del archivo
-                attachmentLink.textContent = msg.content || `Archivo: ${attachment.file_name}`;
+                // Para otros archivos, creamos la nueva "cajita".
+                
+                // 1. Corregimos el problema del nombre: verificamos 'file_name' y damos un texto por defecto.
+                const fileName = attachment.file_name || 'Archivo adjunto';
+
+                const attachmentLink = document.createElement('a');
+                attachmentLink.href = attachment.data_url;
+                attachmentLink.target = '_blank';
+                attachmentLink.rel = 'noopener noreferrer';
+                attachmentLink.classList.add('file-attachment-link'); // Clase para el enlace
+
+                // 2. Creamos el contenedor principal de la burbuja del archivo.
+                const fileBox = document.createElement('div');
+                fileBox.classList.add('file-attachment');
+
+                // 3. Añadimos el icono. Usamos un emoji simple 📄.
+                const iconSpan = document.createElement('span');
+                iconSpan.classList.add('file-icon');
+                iconSpan.textContent = '📄';
+                
+                // 4. Añadimos el nombre del archivo.
+                const nameSpan = document.createElement('span');
+                nameSpan.classList.add('file-name');
+                nameSpan.textContent = fileName;
+
+                // Montamos la estructura: icono y nombre dentro de la caja.
+                fileBox.appendChild(iconSpan);
+                fileBox.appendChild(nameSpan);
+                
+                // La caja va dentro del enlace.
+                attachmentLink.appendChild(fileBox);
+
+                // Y el enlace va en el div del mensaje.
+                messageDiv.appendChild(attachmentLink);
+                
+                // Si el mensaje tiene texto (caption), lo añadimos debajo.
+                if (msg.content) {
+                    const caption = document.createElement('span');
+                    caption.classList.add('message-caption');
+                    caption.textContent = msg.content;
+                    messageDiv.appendChild(caption);
+                }
             }
-            messageDiv.appendChild(attachmentLink);
         } else {
-            // Si no hay adjuntos, solo muestra el texto
+            // Mensajes de solo texto (sin cambios)
             messageDiv.textContent = msg.content;
         }
         
-        // Usamos prepend para que con CSS (column-reverse) aparezcan abajo
         messagesList.prepend(messageDiv);
     });
     
-    // Volvemos a añadir el indicador si estaba visible
     if (typingIndicatorIsVisible) {
         messagesList.prepend(typingIndicator);
     }
     
     scrollToBottom();
 }
+
 
 /**
  * Hace scroll suave hacia el final de la lista de mensajes.
@@ -105,15 +147,13 @@ async function fetchAllMessages() {
         if (!response.ok) throw new Error('No se pudieron obtener los mensajes.');
         const data = await response.json();
 
-        // Evita re-renderizar si no hay mensajes nuevos
         if (data.length > state.messages.length) {
             state.messages = data;
             renderAllMessages();
         }
 
-        // Si el último mensaje es del agente, para el indicador de "escribiendo"
         const lastMsg = data[data.length - 1];
-        if (lastMsg && lastMsg.message_type !== 0) { // 0 es 'outgoing'
+        if (lastMsg && lastMsg.message_type !== 0) {
             typingIndicator.style.display = 'none';
             if (state.typingTimer) clearTimeout(state.typingTimer);
             setFormDisabled(false);
@@ -128,7 +168,7 @@ async function fetchAllMessages() {
  * Se asegura de que exista una conversación activa.
  */
 async function ensureConversation() {
-    if (state.conversationId) return; // Si ya tenemos una, no hace nada
+    if (state.conversationId) return;
     
     const convResponse = await fetch(`https://${CHATWOOT_URL}/public/api/v1/inboxes/${INBOX_IDENTIFIER}/contacts/${state.contactIdentifier}/conversations`, {
         method: 'POST',
@@ -182,8 +222,8 @@ function showTypingIndicatorWithDelay() {
     if (state.typingTimer) clearTimeout(state.typingTimer);
     state.typingTimer = setTimeout(() => {
         typingIndicator.style.display = 'flex';
-        renderAllMessages(); // Re-renderizar para añadir el indicador
-    }, 1000); // Un retardo simple de 1 segundo
+        renderAllMessages();
+    }, 1000);
 }
 
 /**
@@ -209,10 +249,10 @@ async function handleSendMessageForm(event) {
         
         state.messages.push(newMessage);
         renderAllMessages();
-        messageInput.value = ''; // Limpiar el input después de enviar
+        messageInput.value = '';
     } catch (error) {
         console.error("Error al enviar mensaje:", error);
-        setFormDisabled(false); // Reactivar formulario en caso de error
+        setFormDisabled(false);
     }
 }
 
@@ -262,11 +302,9 @@ async function handleFileSelect(event) {
         console.error("Error al subir archivo:", error.message);
         alert(`No se pudo subir el archivo: ${error.message}`);
         
-        // Si hay un error, ocultamos el indicador de "escribiendo" y reactivamos el form
         typingIndicator.style.display = 'none';
         setFormDisabled(false);
     } finally {
-        // Limpiamos el valor del input para poder seleccionar el mismo archivo otra vez
         fileInput.value = '';
     }
 }
