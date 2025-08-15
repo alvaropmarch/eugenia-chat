@@ -3,16 +3,16 @@
 
 /* --- Reseteo y Configuración General --- */
 :root {
-    --background: #0D1117; /* Azul muy oscuro, casi negro */
-    --surface: #161B22;   /* Un tono más claro para superficies como el input */
-    --primary: #2F81F7;   /* Azul brillante para acentos */
-    --text-primary: #E6EDF3; /* Texto principal blanco/gris claro */
-    --text-secondary: #7D8590; /* Texto secundario gris */
+    --background: #0D1117;
+    --surface: #161B22;
+    --primary: #2F81F7;
+    --text-primary: #E6EDF3;
+    --text-secondary: #7D8590;
     --bubble-outgoing: var(--primary);
     --bubble-incoming: #21262D;
-    --header-height: 80px; /* Altura del nuevo header */
-    --bottom-area-height: 120px; /* Altura aproximada del área inferior */
-    --vh: 1vh; /* Variable para altura de la ventana en móviles */
+    --header-height: 80px;
+    --bottom-area-height: 120px;
+    --vh: 1vh;
 }
 
 body {
@@ -26,10 +26,11 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: calc(var(--vh, 1vh) * 100); /* Usa la variable --vh */
+    min-height: calc(var(--vh, 1vh) * 100);
     box-sizing: border-box;
     transition: all 0.5s ease;
-    overflow: hidden; /* Deshabilita el scroll en la pantalla de inicio */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 /* Contenedor principal para el centrado inicial */
@@ -39,19 +40,20 @@ body {
     align-items: center;
     width: 100%;
     max-width: 720px;
-    /* Ahora usará el espacio restante del body */
     flex-grow: 1;
     box-sizing: border-box;
     justify-content: center;
     transition: all 0.5s ease;
-    /* Añade padding inferior para que el contenido no quede oculto por el formulario */
+    padding-bottom: 200px;
+    /* CAMBIO CLAVE: Añadimos un margen superior para empujar el contenido hacia abajo y compensar el header fijo. */
+    margin-top: calc(var(--header-height) * 2);
 }
 
 /* Estado activo del chat */
 body.chat-active {
     justify-content: flex-start;
     padding-top: var(--header-height);
-    overflow: auto; /* Habilita el scroll una vez que el chat se activa */
+    padding-bottom: 0;
 }
 
 body.chat-active .initial-header {
@@ -64,14 +66,19 @@ body.chat-active .initial-header {
 body.chat-active #main-content {
     justify-content: flex-start;
     flex-grow: 1;
-    padding-top: var(--header-height); /* Añade el padding aquí */
+    padding-top: 0;
+    padding-bottom: 0;
+    /* En el modo chat, no queremos ese margen, lo volvemos a 0 */
+    margin-top: 0;
 }
 
 body.chat-active #chat-container {
-    max-height: 100%;
+    max-height: auto;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+    padding-top: calc(var(--header-height) + 100px);
+    padding-bottom: 1rem;
 }
 
 body.chat-active .cookie-notice {
@@ -93,7 +100,7 @@ body.chat-active .cookie-notice {
     padding: 0 2rem;
     box-sizing: border-box;
     z-index: 1000;
-    opacity: 1; /* Ahora visible por defecto */
+    opacity: 1;
     transition: opacity 0.5s ease-in-out;
 }
 
@@ -192,7 +199,6 @@ body.chat-active .fade-overlay {
     font-weight: 400;
     margin-bottom: 0.5rem;
     margin-top: 0.20rem;
-
 }
 
 /* --- Contenedor Principal del Chat --- */
@@ -209,12 +215,12 @@ body.chat-active .fade-overlay {
 /* --- Lista de Mensajes --- */
 #messages-list {
     flex-grow: 1;
-    padding: 1rem;
-    overflow-y: auto;
-    display: none; /* Oculto por defecto */
-    flex-direction: column-reverse; /* ¡El cambio clave! */
+    padding-bottom: 200px;
+    overflow-y: visible;
+    display: none;
+    flex-direction: column;
     gap: 0.75rem;
-    padding-top: calc(var(--header-height) + 1rem);
+    padding-top: 0;
 }
 
 /* Muestra el contenedor de mensajes cuando el chat está activo */
@@ -267,20 +273,19 @@ body.chat-active #messages-list {
 
 /* --- ESTILOS PARA IMÁGENES ADJUNTAS --- */
 .message-image {
-    max-width: 100%; /* La clave: la imagen nunca será más ancha que su contenedor */
-    height: auto;    /* Mantiene la proporción correcta de la imagen */
-    display: block;  /* Evita espacios extraños debajo de la imagen */
-    border-radius: 1.25rem; /* Bordes redondeados consistentes con las burbujas */
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 1.25rem;
     cursor: pointer;
-    border: 1px solid #282A33; /* Un borde sutil que encaja con tu diseño */
+    border: 1px solid #282A33;
     transition: opacity 0.2s ease;
 }
 
 .message-image:hover {
-    opacity: 0.85; /* Un pequeño efecto visual al pasar el ratón por encima */
+    opacity: 0.85;
 }
 
-/* Ajustamos el radio de la esquina para que coincida con la "cola" de la burbuja */
 .message.incoming .message-image {
     border-bottom-left-radius: 0.5rem;
 }
@@ -289,7 +294,6 @@ body.chat-active #messages-list {
     border-bottom-right-radius: 0.5rem;
 }
 
-/* Modificación para que la burbuja del mensaje que contiene un adjunto (imagen o file) no tenga padding extra */
 .message:has(.file-attachment-link),
 .message:has(.message-image) {
     background: transparent !important;
@@ -350,21 +354,41 @@ body.chat-active #messages-list {
 }
 
 /* --- Formulario de Envío --- */
+/* Estilo para la vista inicial (sin chat-active) */
+.foot-div {
+    width: 100%;
+    max-width: 720px;
+    background-color: transparent;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: static;
+    margin-top: 0.5rem;
+}
+
+/* Estilo para cuando el chat está activo */
+body.chat-active .foot-div {
+    position: fixed;
+    bottom: 0;
+    z-index: 100;
+    background-color: #11131C;
+    margin: 0 auto; /* CAMBIO: Ahora usamos margin: auto */
+    left: 0;        /* CAMBIO: Anclamos a la izquierda */
+    right: 0;       /* CAMBIO: Anclamos a la derecha */
+    padding: 0;
+}
+
 #message-form {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
     padding: 1.2rem 1.5rem;
-    margin-top: 1rem;
     background-color: #1D1F28;
     border-radius: 1.5rem;
     border: 2px solid #282A33;
     box-sizing: border-box;
     width: 100%;
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    z-index: 10;
 }
 
 #message-input {
@@ -582,8 +606,6 @@ body.chat-active #messages-list {
     }
     
     .quick-actions {
-        flex-wrap: wrap;
-        justify-content: flex-start;
         gap: 0.5rem;
     }
 
@@ -612,12 +634,9 @@ body.chat-active #messages-list {
         font-size: 0.9rem;
     }
 
-    #message-form {
+    body.chat-active .foot-div {
         margin-top: 0;
-        padding: 1rem;
-        position: sticky;
-        bottom: 0;
-    }
+        padding: 0 1rem;    }
     
     .cookie-notice {
         margin-top: 0.5rem;

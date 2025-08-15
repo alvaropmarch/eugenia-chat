@@ -13,6 +13,10 @@ const fileInput = document.getElementById('file-input');
 const quickActionButtons = document.querySelectorAll('.quick-action-button');
 const quickActionsContainer = document.querySelector('.quick-actions');
 const body = document.body;
+const mainContent = document.getElementById('main-content');
+const initialHeader = document.querySelector('.initial-header');
+const footDiv = document.querySelector('.foot-div');
+
 
 // --- GESTIÓN DE ESTADO ---
 const state = {
@@ -21,7 +25,7 @@ const state = {
     conversationId: null,
     pollingTimer: null,
     typingTimer: null,
-    lastMessageSentAt: 0,
+    lastMessageSentat: 0,
     isWaitingForResponse: false,
     isChatActive: false,
 };
@@ -29,99 +33,89 @@ const state = {
 // --- FUNCIONES ---
 
 /**
- * Renderiza todos los mensajes en la lista, ordenados por fecha.
+ * Renderiza los mensajes que aún no están en el DOM.
  */
-function renderAllMessages() {
+function renderNewMessages() {
     state.messages.sort((a, b) => a.created_at - b.created_at);
     
+    // Mover el indicador de escritura para insertarlo de nuevo al final.
     const typingIndicatorIsVisible = typingIndicator.style.display !== 'none';
-    messagesList.innerHTML = ''; 
-
+    if (typingIndicatorIsVisible && typingIndicator.parentNode) {
+        typingIndicator.parentNode.removeChild(typingIndicator);
+    }
+    
     state.messages.forEach(msg => {
-        const type = msg.sender && msg.sender.type === 'contact' ? 'outgoing' : 'incoming';
-        const messageDiv = document.createElement('div');
-        messageDiv.classList.add('message', type);
-        messageDiv.dataset.id = String(msg.id);
+        const existingMessage = messagesList.querySelector(`[data-id="${String(msg.id)}"]`);
+        if (!existingMessage) {
+            const type = msg.sender && msg.sender.type === 'contact' ? 'outgoing' : 'incoming';
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', type);
+            messageDiv.dataset.id = String(msg.id);
 
-        if (msg.attachments && msg.attachments.length > 0) {
-            const attachment = msg.attachments[0];
-            
-            // Si es una imagen, la mostramos como antes.
-            if (attachment.file_type === 'image') {
-                const attachmentLink = document.createElement('a');
-                attachmentLink.href = attachment.data_url;
-                attachmentLink.target = '_blank';
-                attachmentLink.rel = 'noopener noreferrer';
+            if (msg.attachments && msg.attachments.length > 0) {
+                const attachment = msg.attachments[0];
                 
-                const img = document.createElement('img');
-                img.src = attachment.data_url;
-                img.alt = attachment.file_name || 'Imagen adjunta';
-                img.classList.add('message-image');
-                attachmentLink.appendChild(img);
-                messageDiv.appendChild(attachmentLink);
+                if (attachment.file_type === 'image') {
+                    const attachmentLink = document.createElement('a');
+                    attachmentLink.href = attachment.data_url;
+                    attachmentLink.target = '_blank';
+                    attachmentLink.rel = 'noopener noreferrer';
+                    
+                    const img = document.createElement('img');
+                    img.src = attachment.data_url;
+                    img.alt = attachment.file_name || 'Imagen adjunta';
+                    img.classList.add('message-image');
+                    attachmentLink.appendChild(img);
+                    messageDiv.appendChild(attachmentLink);
 
-                // El caption (texto del mensaje) va debajo de la imagen
-                if (msg.content) {
-                    const caption = document.createElement('span');
-                    caption.classList.add('message-caption'); // Clase para estilizar
-                    caption.textContent = msg.content;
-                    messageDiv.appendChild(caption);
+                    if (msg.content) {
+                        const caption = document.createElement('span');
+                        caption.classList.add('message-caption');
+                        caption.textContent = msg.content;
+                        messageDiv.appendChild(caption);
+                    }
+
+                } else {
+                    const fileName = attachment.file_name || 'Archivo adjunto';
+                    const attachmentLink = document.createElement('a');
+                    attachmentLink.href = attachment.data_url;
+                    attachmentLink.target = '_blank';
+                    attachmentLink.rel = 'noopener noreferrer';
+                    attachmentLink.classList.add('file-attachment-link');
+
+                    const fileBox = document.createElement('div');
+                    fileBox.classList.add('file-attachment');
+
+                    const iconSpan = document.createElement('span');
+                    iconSpan.classList.add('file-icon');
+                    iconSpan.textContent = '📄';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.classList.add('file-name');
+                    nameSpan.textContent = fileName;
+
+                    fileBox.appendChild(iconSpan);
+                    fileBox.appendChild(nameSpan);
+                    attachmentLink.appendChild(fileBox);
+                    messageDiv.appendChild(attachmentLink);
+                    
+                    if (msg.content) {
+                        const caption = document.createElement('span');
+                        caption.classList.add('message-caption');
+                        caption.textContent = msg.content;
+                        messageDiv.appendChild(caption);
+                    }
                 }
-
             } else {
-                // Para otros archivos, creamos la nueva "cajita".
-                
-                // 1. Corregimos el problema del nombre: verificamos 'file_name' y damos un texto por defecto.
-                const fileName = attachment.file_name || 'Archivo adjunto';
-
-                const attachmentLink = document.createElement('a');
-                attachmentLink.href = attachment.data_url;
-                attachmentLink.target = '_blank';
-                attachmentLink.rel = 'noopener noreferrer';
-                attachmentLink.classList.add('file-attachment-link'); // Clase para el enlace
-
-                // 2. Creamos el contenedor principal de la burbuja del archivo.
-                const fileBox = document.createElement('div');
-                fileBox.classList.add('file-attachment');
-
-                // 3. Añadimos el icono. Usamos un emoji simple 📄.
-                const iconSpan = document.createElement('span');
-                iconSpan.classList.add('file-icon');
-                iconSpan.textContent = '📄';
-                
-                // 4. Añadimos el nombre del archivo.
-                const nameSpan = document.createElement('span');
-                nameSpan.classList.add('file-name');
-                nameSpan.textContent = fileName;
-
-                // Montamos la estructura: icono y nombre dentro de la caja.
-                fileBox.appendChild(iconSpan);
-                fileBox.appendChild(nameSpan);
-                
-                // La caja va dentro del enlace.
-                attachmentLink.appendChild(fileBox);
-
-                // Y el enlace va en el div del mensaje.
-                messageDiv.appendChild(attachmentLink);
-                
-                // Si el mensaje tiene texto (caption), lo añadimos debajo.
-                if (msg.content) {
-                    const caption = document.createElement('span');
-                    caption.classList.add('message-caption');
-                    caption.textContent = msg.content;
-                    messageDiv.appendChild(caption);
-                }
+                messageDiv.textContent = msg.content;
             }
-        } else {
-            // Mensajes de solo texto (sin cambios)
-            messageDiv.textContent = msg.content;
+            
+            messagesList.appendChild(messageDiv);
         }
-        
-        messagesList.prepend(messageDiv);
     });
     
     if (typingIndicatorIsVisible) {
-        messagesList.prepend(typingIndicator);
+        messagesList.appendChild(typingIndicator);
     }
     
     scrollToBottom();
@@ -132,9 +126,7 @@ function renderAllMessages() {
  * Hace scroll suave hacia el final de la lista de mensajes.
  */
 function scrollToBottom() {
-    if (messagesList) {
-        messagesList.scrollTo({ top: messagesList.scrollHeight, behavior: 'smooth' });
-    }
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
 }
 
 /**
@@ -149,7 +141,7 @@ async function fetchAllMessages() {
 
         if (data.length > state.messages.length) {
             state.messages = data;
-            renderAllMessages();
+            renderNewMessages();
         }
 
         const lastMsg = data[data.length - 1];
@@ -222,7 +214,7 @@ function showTypingIndicatorWithDelay() {
     if (state.typingTimer) clearTimeout(state.typingTimer);
     state.typingTimer = setTimeout(() => {
         typingIndicator.style.display = 'flex';
-        renderAllMessages();
+        renderNewMessages();
     }, 1000);
 }
 
@@ -248,7 +240,7 @@ async function handleSendMessageForm(event) {
         const newMessage = await response.json();
         
         state.messages.push(newMessage);
-        renderAllMessages();
+        renderNewMessages();
         messageInput.value = '';
     } catch (error) {
         console.error("Error al enviar mensaje:", error);
@@ -295,7 +287,7 @@ async function handleFileSelect(event) {
         }
 
         state.messages.push(result.data);
-        renderAllMessages();
+        renderNewMessages();
         messageInput.value = '';
 
     } catch (error) {
@@ -315,13 +307,24 @@ async function handleFileSelect(event) {
 function activateChatLayout() {
     if (state.isChatActive) return;
     
-    body.classList.add('chat-active');
+    initialHeader.style.display = 'none';
+    quickActionsContainer.style.display = 'none';
     messagesList.style.display = 'flex';
-    if (quickActionsContainer) {
-        quickActionsContainer.style.display = 'none';
-    }
+    body.classList.add('chat-active');
+    
     state.isChatActive = true;
 }
+
+/**
+ * Ajusta el padding inferior del main-content según la altura del foot-div.
+ */
+function adjustMainContentPadding() {
+    if (footDiv) {
+        const footDivHeight = footDiv.offsetHeight;
+        mainContent.style.paddingBottom = `${footDivHeight + 20}px`; // +20px para un poco de espacio extra
+    }
+}
+
 
 // --- INICIO DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -331,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setVh();
     window.addEventListener('resize', setVh);
+    window.addEventListener('resize', adjustMainContentPadding);
 
     const defaultMessage = "Hola! Quiero ahorrar en mi factura de la luz";
     messageInput.value = defaultMessage;
@@ -349,7 +353,10 @@ document.addEventListener('DOMContentLoaded', () => {
             quickActionButtons.forEach(btn => btn.classList.remove('is-active'));
             button.classList.add('is-active');
             messageInput.value = button.dataset.message;
-            messageInput.focus();
+            handleSendMessageForm(new Event('submit'));
         });
     });
+
+    // Llamamos a la función de ajuste de padding al cargar la página
+    adjustMainContentPadding();
 });
