@@ -17,6 +17,10 @@ const mainContent = document.getElementById('main-content');
 const initialHeader = document.querySelector('.initial-header');
 const footDiv = document.querySelector('.foot-div');
 
+// Configura marked.js para que respete los saltos de línea
+marked.setOptions({
+  breaks: true
+});
 
 // --- GESTIÓN DE ESTADO ---
 const state = {
@@ -38,7 +42,6 @@ const state = {
 function renderNewMessages() {
     state.messages.sort((a, b) => a.created_at - b.created_at);
     
-    // Mover el indicador de escritura para insertarlo de nuevo al final.
     const typingIndicatorIsVisible = typingIndicator.style.display !== 'none';
     if (typingIndicatorIsVisible && typingIndicator.parentNode) {
         typingIndicator.parentNode.removeChild(typingIndicator);
@@ -107,7 +110,7 @@ function renderNewMessages() {
                     }
                 }
             } else {
-                messageDiv.textContent = msg.content;
+                messageDiv.innerHTML = marked.parse(msg.content || '');
             }
             
             messagesList.appendChild(messageDiv);
@@ -280,17 +283,31 @@ async function handleFileSelect(event) {
             body: formData,
         });
 
-        const result = await response.json();
-
+        // ✅ LÓGICA CORREGIDA Y DEFINITIVA
+        // Primero, comprobamos si la respuesta NO fue exitosa (ej. error 500)
         if (!response.ok) {
-            throw new Error(result.error || 'Error desconocido al subir el archivo.');
+            const contentType = response.headers.get('content-type');
+            
+            // Si el error es HTML (el crash del servidor)
+            if (contentType && contentType.indexOf('application/json') === -1) {
+                // Lanzamos nuestro propio error amigable y nos detenemos aquí.
+                throw new Error('El archivo es demasiado grande o el servidor ha fallado.');
+            } else {
+                // Si el error SÍ es JSON (un error controlado), lo leemos y lanzamos su mensaje.
+                const errorResult = await response.json();
+                throw new Error(errorResult.error || 'Ha ocurrido un error desconocido.');
+            }
         }
 
+        // Si hemos llegado hasta aquí, la respuesta SÍ fue exitosa (status 200).
+        // Ahora es seguro leerla como JSON.
+        const result = await response.json();
         state.messages.push(result.data);
         renderNewMessages();
         messageInput.value = '';
 
     } catch (error) {
+        // Este bloque 'catch' ahora recibirá los mensajes de error amigables y correctos.
         console.error("Error al subir archivo:", error.message);
         alert(`No se pudo subir el archivo: ${error.message}`);
         
@@ -300,6 +317,7 @@ async function handleFileSelect(event) {
         fileInput.value = '';
     }
 }
+
 
 /**
  * Cambia el layout de la página para mostrar el chat activo.
@@ -324,7 +342,6 @@ function adjustMainContentPadding() {
         mainContent.style.paddingBottom = `${footDivHeight + 20}px`; // +20px para un poco de espacio extra
     }
 }
-
 
 // --- INICIO DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -357,6 +374,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Llamamos a la función de ajuste de padding al cargar la página
     adjustMainContentPadding();
 });
