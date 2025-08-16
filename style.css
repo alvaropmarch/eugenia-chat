@@ -33,6 +33,10 @@ body {
     overflow-y: auto;
 }
 
+p{
+    margin: 0;
+}
+
 /* Contenedor principal para el centrado inicial */
 #main-content {
     display: flex;
@@ -258,14 +262,14 @@ body.chat-active #messages-list {
 }
 
 .incoming {
-    background: transparent !important;
+    background: #1D1F28;
     color: #fff !important;
     align-self: flex-start;
     border-bottom-left-radius: 0.5rem;
 }
 
 .outgoing {
-    background-color: #1D1F28 !important;
+    background-color: var(--primary) !important;
     color: #fff !important;
     align-self: flex-end;
     border-bottom-right-radius: 0.5rem;
