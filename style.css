@@ -15,6 +15,10 @@
     --vh: 1vh;
 }
 
+a {
+  color: var(--primary) /* Esto pone todos los enlaces de color naranja */
+}
+
 body {
     touch-action: manipulation;
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -272,6 +276,7 @@ body.chat-active #messages-list {
     background-color: var(--primary) !important;
     color: #fff !important;
     align-self: flex-end;
+    border-radius: 1.25rem; 
     border-bottom-right-radius: 0.5rem;
 }
 
@@ -308,16 +313,14 @@ body.chat-active #messages-list {
 .file-attachment {
     display: flex;
     align-items: center;
-    border: 1px solid #282A33;
-    border-radius: 1.25rem;
     padding: 10px 15px;
     cursor: pointer;
     transition: background-color 0.2s ease;
 }
 
 .file-attachment-link {
-    text-decoration: none;
-    color: inherit;
+    text-decoration: none !important; /* Asegura que no haya subrayado */
+    color: inherit; /* Hereda el color del texto del contenedor padre */
     display: inline-block;
 }
 
@@ -342,7 +345,6 @@ body.chat-active #messages-list {
 
 .message.incoming .file-attachment {
     background-color: var(--bubble-incoming);
-    border-bottom-left-radius: 0.5rem;
 }
 .message.incoming .file-attachment:hover {
     background-color: #2a3038;
@@ -351,7 +353,6 @@ body.chat-active #messages-list {
 .message.outgoing .file-attachment {
     background-color: #1D1F28;
     border-color: #282A33;
-    border-bottom-right-radius: 0.5rem;
 }
 .message.outgoing .file-attachment:hover {
     background-color: #232532;
@@ -377,9 +378,9 @@ body.chat-active .foot-div {
     bottom: 0;
     z-index: 100;
     background-color: #11131C;
-    margin: 0 auto; /* CAMBIO: Ahora usamos margin: auto */
-    left: 0;        /* CAMBIO: Anclamos a la izquierda */
-    right: 0;       /* CAMBIO: Anclamos a la derecha */
+    margin: 0 auto;
+    left: 0;
+    right: 0;
     padding: 0;
 }
 
@@ -556,6 +557,122 @@ body.chat-active .foot-div {
     text-decoration: none;
 }
 
+/* --- ESTILOS PARA LA CARGA DE ARCHIVOS (NUEVO) --- */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.uploading-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    background-color: #1D1F28;
+    border: 1px solid #282A33;
+    border-radius: 1.25rem !important;
+    border-bottom-right-radius: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.upload-spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    flex-shrink: 0;
+}
+
+.upload-file-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.upload-file-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.upload-status-text {
+    font-size: 0.85rem;
+}
+
+/* Estilo para el estado de error */
+.uploading-placeholder.error {
+    background-color: #2b1c1c;
+    border-color: #582a2a;
+}
+
+.uploading-placeholder.error .upload-spinner {
+    display: none; /* Ocultamos el spinner en caso de error */
+}
+
+.uploading-placeholder.error .upload-status-text {
+    color: #ff8080;
+    font-weight: 500;
+}
+
+/* --- ESTILOS PARA NOTIFICACIONES TOAST (AÑADIDO) --- */
+
+/* El contenedor que posiciona los toasts en la pantalla */
+#toast-container {
+    position: fixed; /* Fijo en la pantalla */
+    top: 20px; /* Espacio desde la parte superior */
+    left: 50%; /* Centrado horizontal */
+    transform: translateX(-50%); /* Ajuste fino del centrado */
+    z-index: 9999; /* Siempre por encima de todo */
+    display: flex;
+    flex-direction: column; /* Apila notificaciones verticalmente */
+    align-items: center;
+    gap: 10px; /* Espacio entre notificaciones */
+}
+
+/* El estilo de cada aviso individual */
+.toast {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--primary); /* Usa tu color azul principal */
+    color: #FFFFFF; /* Texto blanco */
+    padding: 10px 30px; /* Relleno interior */
+    border-radius: 50px; /* Bordes completamente redondeados (forma de píldora) */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra suave */
+    animation: toast-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; /* Animación de entrada */
+}
+
+/* Clase para la animación de salida */
+.toast.hide {
+    animation: toast-out 0.5s ease-out forwards;
+}
+
+/* Animación para que el toast aparezca */
+@keyframes toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animación para que el toast desaparezca */
+@keyframes toast-out {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
 /* ========================================= */
 /* --- ESTILOS RESPONSIVOS PARA MÓVIL --- */
 /* ========================================= */
@@ -589,8 +706,15 @@ body.chat-active .foot-div {
     }
     
     .fade-overlay {
-        display: none;
-    }
+    position: fixed;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: linear-gradient(to bottom, #11131C, rgba(17, 19, 28, 0));
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;    }
 
     #main-content {
         max-width: 100%;

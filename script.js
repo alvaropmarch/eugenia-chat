@@ -38,6 +38,7 @@ const state = {
 
 /**
  * Renderiza los mensajes que aún no están en el DOM.
+ * MODIFICADO: Ahora también maneja estados de 'pending' y 'error' para la carga de archivos.
  */
 function renderNewMessages() {
     state.messages.sort((a, b) => a.created_at - b.created_at);
@@ -47,74 +48,95 @@ function renderNewMessages() {
         typingIndicator.parentNode.removeChild(typingIndicator);
     }
     
+    // Limpiamos la lista para redibujar y evitar duplicados/problemas de actualización
+    messagesList.innerHTML = ''; 
+
     state.messages.forEach(msg => {
-        const existingMessage = messagesList.querySelector(`[data-id="${String(msg.id)}"]`);
-        if (!existingMessage) {
-            const type = msg.sender && msg.sender.type === 'contact' ? 'outgoing' : 'incoming';
-            const messageDiv = document.createElement('div');
-            messageDiv.classList.add('message', type);
-            messageDiv.dataset.id = String(msg.id);
+        const messageDiv = document.createElement('div');
+        const type = msg.sender && msg.sender.type === 'contact' ? 'outgoing' : 'incoming';
+        
+        messageDiv.classList.add('message', type);
+        messageDiv.dataset.id = String(msg.id);
 
-            if (msg.attachments && msg.attachments.length > 0) {
-                const attachment = msg.attachments[0];
+        // --- LÓGICA NUEVA: RENDERIZADO CONDICIONAL ---
+        if (msg.status === 'pending') {
+            messageDiv.classList.add('uploading-placeholder');
+            messageDiv.innerHTML = `
+                <div class="upload-spinner"></div>
+                <div class="upload-file-info">
+                    <span class="upload-file-name">${msg.fileName || 'Subiendo archivo...'}</span>
+                    <span class="upload-status-text">Cargando...</span>
+                </div>
+            `;
+        } else if (msg.status === 'error') {
+            messageDiv.classList.add('uploading-placeholder', 'error');
+            messageDiv.innerHTML = `
+                <div class="upload-file-info">
+                    <span class="upload-file-name">${msg.fileName || 'Archivo'}</span>
+                    <span class="upload-status-text">Error al subir. Inténtalo de nuevo.</span>
+                </div>
+            `;
+        } else if (msg.attachments && msg.attachments.length > 0) {
+            // Lógica existente para adjuntos (imágenes y archivos)
+            messageDiv.classList.remove('message'); // Quitamos padding/fondo por defecto
+            const attachment = msg.attachments[0];
+            
+            if (attachment.file_type === 'image') {
+                const attachmentLink = document.createElement('a');
+                attachmentLink.href = attachment.data_url;
+                attachmentLink.target = '_blank';
+                attachmentLink.rel = 'noopener noreferrer';
                 
-                if (attachment.file_type === 'image') {
-                    const attachmentLink = document.createElement('a');
-                    attachmentLink.href = attachment.data_url;
-                    attachmentLink.target = '_blank';
-                    attachmentLink.rel = 'noopener noreferrer';
-                    
-                    const img = document.createElement('img');
-                    img.src = attachment.data_url;
-                    img.alt = attachment.file_name || 'Imagen adjunta';
-                    img.classList.add('message-image');
-                    attachmentLink.appendChild(img);
-                    messageDiv.appendChild(attachmentLink);
+                const img = document.createElement('img');
+                img.src = attachment.data_url;
+                img.alt = attachment.file_name || 'Imagen adjunta';
+                img.classList.add('message-image');
+                attachmentLink.appendChild(img);
+                messageDiv.appendChild(attachmentLink);
 
-                    if (msg.content) {
-                        const caption = document.createElement('span');
-                        caption.classList.add('message-caption');
-                        caption.textContent = msg.content;
-                        messageDiv.appendChild(caption);
-                    }
-
-                } else {
-                    const fileName = attachment.file_name || 'Archivo adjunto';
-                    const attachmentLink = document.createElement('a');
-                    attachmentLink.href = attachment.data_url;
-                    attachmentLink.target = '_blank';
-                    attachmentLink.rel = 'noopener noreferrer';
-                    attachmentLink.classList.add('file-attachment-link');
-
-                    const fileBox = document.createElement('div');
-                    fileBox.classList.add('file-attachment');
-
-                    const iconSpan = document.createElement('span');
-                    iconSpan.classList.add('file-icon');
-                    iconSpan.textContent = '📄';
-                    
-                    const nameSpan = document.createElement('span');
-                    nameSpan.classList.add('file-name');
-                    nameSpan.textContent = fileName;
-
-                    fileBox.appendChild(iconSpan);
-                    fileBox.appendChild(nameSpan);
-                    attachmentLink.appendChild(fileBox);
-                    messageDiv.appendChild(attachmentLink);
-                    
-                    if (msg.content) {
-                        const caption = document.createElement('span');
-                        caption.classList.add('message-caption');
-                        caption.textContent = msg.content;
-                        messageDiv.appendChild(caption);
-                    }
+                if (msg.content) {
+                    const caption = document.createElement('span');
+                    caption.classList.add('message-caption');
+                    caption.textContent = msg.content;
+                    messageDiv.appendChild(caption);
                 }
             } else {
-                messageDiv.innerHTML = marked.parse(msg.content || '');
+                const fileName = attachment.file_name || 'Archivo adjunto';
+                const attachmentLink = document.createElement('a');
+                attachmentLink.href = attachment.data_url;
+                attachmentLink.target = '_blank';
+                attachmentLink.rel = 'noopener noreferrer';
+                attachmentLink.classList.add('file-attachment-link');
+
+                const fileBox = document.createElement('div');
+                fileBox.classList.add('file-attachment');
+
+                const iconSpan = document.createElement('span');
+                iconSpan.classList.add('file-icon');
+                iconSpan.textContent = '📄';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.classList.add('file-name');
+                nameSpan.textContent = fileName;
+
+                fileBox.appendChild(iconSpan);
+                fileBox.appendChild(nameSpan);
+                attachmentLink.appendChild(fileBox);
+                messageDiv.appendChild(attachmentLink);
+                
+                if (msg.content) {
+                    const caption = document.createElement('span');
+                    caption.classList.add('message-caption');
+                    caption.textContent = msg.content;
+                    messageDiv.appendChild(caption);
+                }
             }
-            
-            messagesList.appendChild(messageDiv);
+        } else {
+            // Lógica existente para mensajes de texto
+            messageDiv.innerHTML = marked.parse(msg.content || '');
         }
+        
+        messagesList.appendChild(messageDiv);
     });
     
     if (typingIndicatorIsVisible) {
@@ -123,7 +145,6 @@ function renderNewMessages() {
     
     scrollToBottom();
 }
-
 
 /**
  * Hace scroll suave hacia el final de la lista de mensajes.
@@ -253,6 +274,7 @@ async function handleSendMessageForm(event) {
 
 /**
  * Gestiona la selección y subida de un archivo.
+ * MODIFICADO: Ahora muestra un placeholder de carga y lo actualiza al terminar.
  */
 async function handleFileSelect(event) {
     const file = event.target.files[0];
@@ -264,11 +286,23 @@ async function handleFileSelect(event) {
     }
 
     setFormDisabled(true);
-    showTypingIndicatorWithDelay();
+    // Ya no mostramos el indicador de "escribiendo", sino el placeholder
+    // showTypingIndicatorWithDelay(); 
+
+    // --- LÓGICA NUEVA: CREACIÓN DEL PLACEHOLDER ---
+    const tempId = `temp_${Date.now()}`;
+    const placeholderMessage = {
+        id: tempId,
+        status: 'pending',
+        fileName: file.name,
+        created_at: Date.now() / 1000,
+        sender: { type: 'contact' } // Para que se alinee a la derecha
+    };
+    state.messages.push(placeholderMessage);
+    renderNewMessages();
+    await initializeChatIfNeeded();
 
     try {
-        await initializeChatIfNeeded();
-        
         const formData = new FormData();
         formData.append('attachment', file);
         formData.append('conversationId', state.conversationId);
@@ -283,41 +317,43 @@ async function handleFileSelect(event) {
             body: formData,
         });
 
-        // ✅ LÓGICA CORREGIDA Y DEFINITIVA
-        // Primero, comprobamos si la respuesta NO fue exitosa (ej. error 500)
+        // --- LÓGICA DE ACTUALIZACIÓN DEL PLACEHOLDER ---
+        const messageIndex = state.messages.findIndex(m => m.id === tempId);
+
         if (!response.ok) {
             const contentType = response.headers.get('content-type');
-            
-            // Si el error es HTML (el crash del servidor)
-            if (contentType && contentType.indexOf('application/json') === -1) {
-                // Lanzamos nuestro propio error amigable y nos detenemos aquí.
-                throw new Error('El archivo es demasiado grande o el servidor ha fallado.');
-            } else {
-                // Si el error SÍ es JSON (un error controlado), lo leemos y lanzamos su mensaje.
+            let errorMessage = 'El archivo es demasiado grande o el servidor ha fallado.';
+            if (contentType && contentType.indexOf('application/json') !== -1) {
                 const errorResult = await response.json();
-                throw new Error(errorResult.error || 'Ha ocurrido un error desconocido.');
+                errorMessage = errorResult.error || 'Ha ocurrido un error desconocido.';
             }
+             if (messageIndex > -1) {
+                state.messages[messageIndex].status = 'error';
+            }
+            throw new Error(errorMessage);
         }
 
-        // Si hemos llegado hasta aquí, la respuesta SÍ fue exitosa (status 200).
-        // Ahora es seguro leerla como JSON.
         const result = await response.json();
-        state.messages.push(result.data);
+        // Reemplazamos el placeholder por el mensaje real del servidor
+        if (messageIndex > -1) {
+            state.messages[messageIndex] = result.data;
+        } else {
+            state.messages.push(result.data);
+        }
+        
         renderNewMessages();
         messageInput.value = '';
+        setFormDisabled(false);
 
     } catch (error) {
-        // Este bloque 'catch' ahora recibirá los mensajes de error amigables y correctos.
         console.error("Error al subir archivo:", error.message);
-        alert(`No se pudo subir el archivo: ${error.message}`);
-        
-        typingIndicator.style.display = 'none';
+        // El estado de error ya se ha establecido, solo renderizamos
+        renderNewMessages();
         setFormDisabled(false);
     } finally {
         fileInput.value = '';
     }
 }
-
 
 /**
  * Cambia el layout de la página para mostrar el chat activo.
@@ -342,6 +378,29 @@ function adjustMainContentPadding() {
         mainContent.style.paddingBottom = `${footDivHeight + 20}px`; // +20px para un poco de espacio extra
     }
 }
+
+// --- AÑADIDO: FUNCIÓN PARA MOSTRAR NOTIFICACIONES TOAST ---
+function showToast(message) {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    // 1. Crea el elemento del toast
+    const toast = document.createElement('div');
+    toast.classList.add('toast');
+    toast.textContent = message;
+
+    // 2. Añádelo al contenedor
+    container.appendChild(toast);
+
+    // 3. Programa su desaparición
+    setTimeout(() => {
+        toast.classList.add('hide');
+        toast.addEventListener('animationend', () => {
+            toast.remove();
+        });
+    }, 3000); // El toast durará 3 segundos
+}
+
 
 // --- INICIO DE LA APLICACIÓN ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -375,4 +434,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     adjustMainContentPadding();
+
+    // --- AÑADIDO: LÓGICA PARA EL BOTÓN DE INICIAR SESIÓN ---
+    const loginButton = document.querySelector('.cta-button.secondary');
+    if (loginButton) {
+        loginButton.addEventListener('click', (event) => {
+            event.preventDefault(); 
+            showToast('Próximamente');
+        });
+    }
 });
